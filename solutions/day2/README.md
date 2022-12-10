@@ -57,6 +57,13 @@ score = score_dict[res]
 
 Another way to brute-force is to pre-calculate all combinations, of which there are only 9, and score accordingly
 
+Could generalize such that a general strategy can be submitted as input, then calculate score for all possible combinations, and map the input list using the score dictionary    
 
-    
+### Execution
+
+- Our choice is always the second char per line, one of `{X, Y, Z}`
+- Map that to `{1, 2, 3}` since that returns a flat score
+- Result depends on opponent's choice, one of `{A, B, C}`
+- Here we calculate all combinations, and create score_dict
+  - `AX`: 3, `AY`: 6, `AZ`: 0, etc.
 

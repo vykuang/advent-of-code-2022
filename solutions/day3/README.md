@@ -31,6 +31,10 @@ Find the item type appearing in both compartments of each rucksack; what is the 
 1. Repeat for all entries
 1. Sum the priorities
 
+### Answer
+
+7742
+
 ## Part B
 
 --- Part Two ---
@@ -57,3 +61,26 @@ In the first group, the only item type that appears in all three rucksacks is lo
 Priorities for these items must still be found to organize the sticker attachment efforts: here, they are 18 (r) for the first group and 52 (Z) for the second group. The sum of these is 70.
 
 Find the item type that corresponds to the badges of each three-Elf group. What is the sum of the priorities of those item types?
+
+## Solution - two
+
+- Badge is the one item common between all three elves in the group.
+- Every three records make up one group of elves
+- r is first group's badge
+- compartments do not matter in this problem
+
+### Pseudo code
+
+1. Parse into groups (three lines/group)
+1. Find common item - check_item() can still be used?
+  - Three sets to check: a, b, c
+  - find `shared_ab = a & b`
+  - find `shared = shared_ab & c` 
+1. Map item to priority
+1. Append to list
+1. Repeat until all groups compiled
+1. Sum list of priorities
+
+### Answer
+
+2276
