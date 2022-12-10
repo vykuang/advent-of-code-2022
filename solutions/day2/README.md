@@ -28,7 +28,7 @@ Compound with the fact that you don't actually want to win everytime to not rais
 
 - `A Y` - opp plays rock (A), and we should play paper (Y) to score 2 (for playing paper) + 6 (for winning) = 8 pts
 - `B X` - opp: paper (B), we play rock (X) to gain 1 (for rock) + 0 (for losing) = 0 pts
-- `C Z` - opp:: scissors (C), we play scissors as well (Z) to score 3 (for scissors) + 3 (for draw) = 6 pts
+- `C Z` - opp: scissors (C), we play scissors as well (Z) to score 3 (for scissors) + 3 (for draw) = 6 pts
 - in total we scored 15 pts
 
 Given we know exactly what our opponents will play (puzzle input), what would we score with the above strategy?
@@ -61,9 +61,9 @@ Could generalize such that a general strategy can be submitted as input, then ca
 
 ### Execution
 
-- Our choice is always the second char per line, one of `{X, Y, Z}`
+- Our choice is always the last char per line, one of `{X, Y, Z}`
 - Map that to `{1, 2, 3}` since that returns a flat score
-- Result depends on opponent's choice, one of `{A, B, C}`
+- Result depends on opponent's choice, the last char, one of `{A, B, C}`
 - Here we calculate all combinations, and create score_dict
   - `AX`: 3, `AY`: 6, `AZ`: 0, etc.
 

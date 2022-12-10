@@ -31,10 +31,6 @@ Find the item type appearing in both compartments of each rucksack; what is the 
 1. Repeat for all entries
 1. Sum the priorities
 
-### Answer
-
-7742
-
 ## Part B
 
 --- Part Two ---
@@ -74,13 +70,11 @@ Find the item type that corresponds to the badges of each three-Elf group. What 
 1. Parse into groups (three lines/group)
 1. Find common item - check_item() can still be used?
   - Three sets to check: a, b, c
-  - find `shared_ab = a & b`
-  - find `shared = shared_ab & c` 
+  - find `a & b`
+  - find 
 1. Map item to priority
 1. Append to list
 1. Repeat until all groups compiled
 1. Sum list of priorities
 
-### Answer
 
-2276
