@@ -59,6 +59,8 @@ Another way to brute-force is to pre-calculate all combinations, of which there 
 
 Could generalize such that a general strategy can be submitted as input, then calculate score for all possible combinations, and map the input list using the score dictionary    
 
+Answer: 14163
+
 ### Execution
 
 - Our choice is always the last char per line, one of `{X, Y, Z}`
@@ -67,3 +69,12 @@ Could generalize such that a general strategy can be submitted as input, then ca
 - Here we calculate all combinations, and create score_dict
   - `AX`: 3, `AY`: 6, `AZ`: 0, etc.
 
+## Part 2 - New strategy
+
+Turns out the second column of XYZs denote not what we should play, but the intended results, `{lose, draw, win}`. 
+
+### Solution II
+
+The second column alone tells us the result score, and from the result we have to determine what was played in order to determine the flat score.
+
+Answer: 12091
