@@ -13,7 +13,7 @@ Elves are assigned a range of section IDs for cleanup, but the section IDs *over
 
 The ranges are inclusive
 
-## Part A
+## Part one
 
 How many assignment pairs exist where one pair fully contains the other? e.g. 4th and 5th pair on the sample list
 
@@ -36,3 +36,6 @@ Then, A is completely contained by B
 1. if yes, increment counter, and break
 1. Repeat until end of file
 
+Answer: 464
+
+## Part two
