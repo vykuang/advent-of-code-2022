@@ -39,3 +39,10 @@ Then, A is completely contained by B
 Answer: 464
 
 ## Part two
+
+How many pairs contain any overlaps at all?
+
+Instead of checking for entire subset, check for partial subset.
+
+- if a_lb >= b_lb and a_lb <= b_ub or
+- if a_ub <= b_ub and a_ub <= b_lb
