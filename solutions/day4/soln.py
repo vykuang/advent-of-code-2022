@@ -34,16 +34,35 @@ def check_subset(a_lb, a_ub, b_lb, b_ub) -> bool:
     else:
         return False
 
+def check_overlap(a_lb, a_ub, b_lb, b_ub) -> bool:
+    """Checks for any overlap between a and b
+    Scenarios to check:
+    1. both a_ub and a_lb < b_lb
+    2. vice versa: both b_lb and b_ub < a_lb
+    """
+    if (a_lb < b_lb and a_ub < b_lb) or (b_lb < a_lb and b_ub < a_lb):
+        return False 
+    else:
+        return True
+
 if __name__ == "__main__":
     fp = f"{sys.argv[1]}.txt"
     subset_count = 0
+    overlap_count = 0
     for line in load_input(fp):
         bounds = parse_sections(line)
         if check_subset(*bounds):
             subset_count += 1
+            overlap_count += 1
+        elif check_overlap(*bounds):
+            overlap_count += 1
+        else:
+            pass
         if "test" in fp:
             print(line)
             print(parse_sections(line))
             print(f"Subset found: {check_subset(*parse_sections(line))}")
+            print(f"overlaps found: {check_overlap(*bounds)}")
 
     print(f"total subset found: {subset_count}")
+    print(f"total overlaps found: {overlap_count}")

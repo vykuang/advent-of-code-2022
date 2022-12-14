@@ -46,3 +46,7 @@ Instead of checking for entire subset, check for partial subset.
 
 - if a_lb >= b_lb and a_lb <= b_ub or
 - if a_ub <= b_ub and a_ub <= b_lb
+
+Or more simply, check for inverse of overlap.
+
+Answer: 770
