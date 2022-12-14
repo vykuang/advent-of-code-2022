@@ -10,14 +10,26 @@ def load_input(fp: str):
         for line in f_in.read().splitlines():
             yield line
 
-def parse_schematics(schematic: list[str]) -> list[deque]:
+def make_schem_dict(schematic: list[str]) -> dict:
     """Ingest the ascii schematic of stacks into list of deques
     Assumes the schematics denote crates by capital letter
     enclosed by [], and stack number by the last line in list
     In essence we're transposing the diagram
     """
+    stack_ids = [stack_id for stack_id in schematic[-1].split(sep=" ")
+        if stack_id and stack_id in string.digits]
+    stack_pos = [schematic[-1].index(stack_id) for stack_id in stack_ids]
+    return dict(zip(stack_ids, stack_pos))
 
-
+def make_stacks(schematic: list[str]):
+    """Build the stacks based on parsed schematic"""
+    # initialize stacks
+    stacks = [deque() for _ in schem_dict]
+    # make schem_dict
+    schem_dict = make_schem_dict(schematic)
+    # start from bottom
+    for line in schematic[-2::-1]:
+        
 def parse_procedure(procedure: str):
     """
     Translates "move 1 from 2 to 3" to args for stack methods:
@@ -33,7 +45,7 @@ def parse_procedure(procedure: str):
     return stack_args
 
 
-def parse_input():
+def move_crates():
     """
     Read until blank line, at which point the rearrangement
     procedure starts
@@ -53,10 +65,12 @@ def parse_input():
         print("--- schematics ---")
         for line in schematics:
             print(line)
+
+        print(make_schem_dict(schematics))
         print("--- procedure ---")
         for line in procedure:
             stack_args = parse_procedure(line)
             print(f"move: {stack_args[0]}\tfrom: {stack_args[1]}\tto: {stack_args[2]}")
 if __name__ == "__main__":
-    parse_input()
+    move_crates()
 
