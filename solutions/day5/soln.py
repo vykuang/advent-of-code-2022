@@ -15,10 +15,13 @@ def make_schem_dict(schematic: list[str]) -> dict:
     Assumes the schematics denote crates by capital letter
     enclosed by [], and stack number by the last line in list
     In essence we're transposing the diagram
+    The position acquired here is crucial in constructing the schematic
     """
     stack_ids = [stack_id for stack_id in schematic[-1].split(sep=" ")
-        if stack_id and stack_id in string.digits]
+        if stack_id.isdigit()]
+    # index works here since stack_ids are unique
     stack_pos = [list(schematic[-1]).index(stack_id) for stack_id in stack_ids]
+    stack_ids = [int(label) - 1 for label in stack_ids] # zero-based index
     return dict(zip(stack_pos, stack_ids))
 
 def make_stacks(schematic: list[str]):
@@ -29,12 +32,10 @@ def make_stacks(schematic: list[str]):
     stacks = [deque() for _ in schem_dict]
     # start from bottom
     for line in schematic[-2::-1]:
-        crates = [crate for crate in line if crate in string.ascii_letters]
-        for crate in crates:
-            stack_pos = line.index(crate)
-            stack_id = int(schem_dict[stack_pos]) - 1 # zero-index in list
-            stacks[stack_id].append(crate)
-
+        # for each line, go through each pos in schem_dict
+        for pos in schem_dict:
+            if line[pos].isalpha():
+                stacks[schem_dict[pos]].append(line[pos])
     return stacks            
         
 def parse_procedure(procedure: str):
@@ -50,7 +51,7 @@ def parse_procedure(procedure: str):
     - which stack to take
     - which stack to append
     """
-    stack_args = [int(num) for num in procedure.split(sep=" ") if num in string.digits]
+    stack_args = [int(num) for num in procedure.split(sep=" ") if num.isdigit()] 
     stack_args[1] -= 1
     try:
         stack_args[2] -= 1 # to account for zero-based index
@@ -58,6 +59,10 @@ def parse_procedure(procedure: str):
         print(e)
         print(procedure)
     return stack_args
+
+def print_stacks(stacks):
+    for i, stack in enumerate(stacks):
+        print(f"stack {i+1}:\n{stack}")
 
 def move_crates():
     """
@@ -75,20 +80,21 @@ def move_crates():
         else:
             break
     stacks = make_stacks(schematics)
+    print("original stacks:")
+    print_stacks(stacks)
     procedure = [line for line in input_file]
     for i, line in enumerate(procedure):
-        if line:
-            stack_args = parse_procedure(line) # move x from y to z
-            moved = deque()
-            for _ in range(stack_args[0]):
-                try:
-                    moved.append(stacks[stack_args[1]].pop())
-                except IndexError as e:
-                    print(f"Line {i}: {procedure[i]}", e)
-            stacks[stack_args[2]].extend(moved)
-        else:
-            break
-    top_crates = [stacks[i].pop() for i in range(len(stacks))]
+        stack_args = parse_procedure(line) # move x from y to z
+        moved = deque()
+        for _ in range(stack_args[0]):
+            try:
+                moved.append(stacks[stack_args[1]].pop())
+            except IndexError as e:
+                print(f"Line {i}: {procedure[i]}", e)
+                print_stacks(stacks)
+                raise Exception
+        # for part ii: reverse
+        stacks[stack_args[2]].extend(reversed(moved))
     
     if fn == "test":
         print("--- schematics ---")
@@ -96,15 +102,16 @@ def move_crates():
             print(line)
 
         print(make_schem_dict(schematics))
-        for i, stack in enumerate(stacks):
-            print(f"stack {i+1}:\n{stack}")
+        print_stacks(stacks)
+       
         print("--- procedure ---")
         for line in procedure:
             stack_args = parse_procedure(line)
             print(f"move: {stack_args[0]}\tfrom: {stack_args[1]}\tto: {stack_args[2]}")
 
+    top_crates = [stacks[i].pop() for i in range(len(stacks))]
     return top_crates
 
 if __name__ == "__main__":
-    top_crates = move_crates()
+    top_crates = "".join(move_crates())
     print(f"Top crates: {top_crates}")

@@ -83,3 +83,24 @@ All will have the `.append()` and `.pop()` method to model our stacks
 - parse instructions into `.append()` and `.pop()` statements
 - iterate the instructions
 - call `.pop()` on all `deque`s to find the final sequence of top crates
+
+### Execution log
+
+- use `str.isdigit()` or `str.isalpha()` methods to discern numerals and letters
+- `list.index()` only works as intended for unique characters
+  - input had two Gs and Cs on the same row, and confused my initial attempt to log position using `.index()`
+- cannot change dict while iterating over it
+
+Answer: JCMHLVGMG
+
+## Part two
+
+The cratemover isn't doing what we want! It's the wrong model! Turns out it *can* move multiple crates at once, instead of one at a time like we thought. Moving multiple crates means they stay in the same order
+
+### Solution two
+
+Original implementaion forced `.pop()` and `.append()` one at a time in a `for` loop. Now that we are not constrained by LIFO, a list makes more sense than deque.
+
+However I don't want to refactor deques into lists, so I'll use the `reverse()` method before `.extend()`
+
+answer: LVMRWSSPZ
