@@ -44,7 +44,15 @@ class RootNode:
     
     def calc_size(self):
         """Calculates total size, including subdirectory"""
+        if self.children:
+            # dir, not file
+            size = sum([child.calc_size() for child in self.children])
 
+        else:
+            # file, no child nodes
+            size = self.size
+
+        return size
 
     def __repr__(self):
         return self.name
@@ -106,10 +114,22 @@ if __name__ == "__main__":
     fp = f"{fn}.txt"
     lines = [line for line in load_input(fp)]
     tree = build_file_tree(lines)
+    dir_sizes = [node.calc_size() for node in tree if node.children]
+    # part i - dirs with <= 100,000 size
+    part_i = [node_size for node_size in dir_sizes if node_size <= 100000]
+    part_i_ans = sum(part_i)
+    # part ii - smallest dir >= size_diff
+    free_space = 7e7 - max(dir_sizes) 
+    size_diff = 3e7 - free_space
+    part_ii = [node for node in dir_sizes if node >= size_diff]
+    part_ii_ans = min(part_ii)
+    print(f"part i sum: {part_i_ans}")
+    print(f"part ii dir size: {part_ii_ans}")
     if fn == "test":
         for node in tree:
             print(f"{node.name}:")
             if node.children:
                 print(f"{[child for child in node.children]}")
+                print(f"dir size: {node.calc_size()}")
             else:
                 print(f"file size: {node.size}")

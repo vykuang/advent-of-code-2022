@@ -86,3 +86,23 @@ Lot of parsing here
 1. look for `dir`, and add them as child nodes to pwd
 1. look for numeral, and add them as child node with size and name
 
+Answer: 1206825
+
+## Part ii
+
+- Total file available space: 7e7
+- space needed: 3e7
+
+1. Determine total space
+1. Determine space required to achieve 3e7 free space
+1. Find the dir with the smallest size that if deleted, will let us free up that space for the update
+
+### pseudo-code
+
+1. root.Calc_size()
+1. Find free_space = 7e7 - root.size
+1. free_space should < 3e7; diff = 3e7 - free_space
+1. Find dir.calc_size() for all, if size > diff
+1. Return minimum
+
+answer: 9608311
