@@ -54,9 +54,17 @@ Since the constraint for visibility is more lax than *invisibility*, perhaps it'
 
 I think we could extend the idea of using `max` to determine visibility by successively finding it.
 
-- find first array max from left
+- find first array max from *right*
+  - This mitigates issue where equivalen max values are found
+  - if equal, trees are not visible; need to be higher
+  - reverse, then `.index()`
 - set left side `invis_from_right`
 - to look for others that may be `invis_from_right`, look for next `max`, excluding current `max`. Once found, all nodes between new max and prev max are marked `invis_from_right`, if any.
+- iterate until idx at end of line
+  - expect visible trees to be more frequent towards the right? not necessarily
 - do so for all rows.
 - repeat to find max from right, to mark nodes as `invis_from left` from max to right most start
-
+- *marking* is done by creating a boolean array? end goal here is to use `OR` operation between four bool arrays to find all visible nodes, then sum to count
+  - given the idx of `prev_max` and `current_max`, set them invisible by appending `False` to an ongoing list.
+  - set each `max`s as visible by appending `True` to the list, such that the idx in the list corresponds with the grid pos
+- surely I can't save m x n objects, each with four properties 
