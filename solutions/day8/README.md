@@ -68,3 +68,38 @@ I think we could extend the idea of using `max` to determine visibility by succe
   - given the idx of `prev_max` and `current_max`, set them invisible by appending `False` to an ongoing list.
   - set each `max`s as visible by appending `True` to the list, such that the idx in the list corresponds with the grid pos
 - surely I can't save m x n objects, each with four properties 
+
+`find_visible` only works for `vis_right`; how do I make it work for `vis_left`?
+
+- reverse the input
+- setup is the same
+  - prev_max set as left-most height; since input was reversed, this is actually the right-most height
+- never mind it works, I just set the index increment logic wrong
+  - `idx += num_vis + 1`; the `+ 1` is required to move past current max, and `num_vis` is the index relative to `idx`
+
+## Part two
+
+Now we're looking for the highest *visibility from each tree* instead of from the edges of the forest. Visibility is determined by visibility in each of the four cardinal directions, multiplied together.
+
+- Tree of height 5 can see up to and including another tree of height 5, but not past that.
+- Find the highest vis score for our tree map
+
+### Solution two
+
+Oh boy. Can we re-use any of our existing code?
+
+Let's look at it from a blank slate. How would one solve this problem from the beginning?
+
+### Bruce-force
+
+- Consider every node
+- Gather array for each direction
+- Look for nearest node that is equal or taller
+- Difference in pos is the vis_score
+- Product is scenic_score
+
+### A smarter way?
+
+We're essentially lookin for the highest product of the vis_score. In any case there would be four matrices, one for each direction. Difference is how to build one. Do every node have to be considered?
+
+Don't see a way around it.
