@@ -82,6 +82,9 @@ I think we could extend the idea of using `max` to determine visibility by succe
 Now we're looking for the highest *visibility from each tree* instead of from the edges of the forest. Visibility is determined by visibility in each of the four cardinal directions, multiplied together.
 
 - Tree of height 5 can see up to and including another tree of height 5, but not past that.
+- Do not count trees past this first barrier, even if they're higher
+- Trees on the edge naturally have one direction with a score of 0
+  - Their scenic score is automatically zeroed
 - Find the highest vis score for our tree map
 
 ### Solution two
@@ -92,7 +95,7 @@ Let's look at it from a blank slate. How would one solve this problem from the b
 
 ### Bruce-force
 
-- Consider every node
+- Consider every node in the interior
 - Gather array for each direction
 - Look for nearest node that is equal or taller
 - Difference in pos is the vis_score
@@ -103,3 +106,5 @@ Let's look at it from a blank slate. How would one solve this problem from the b
 We're essentially lookin for the highest product of the vis_score. In any case there would be four matrices, one for each direction. Difference is how to build one. Do every node have to be considered?
 
 Don't see a way around it.
+
+answer: 287040
