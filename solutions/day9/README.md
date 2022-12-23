@@ -11,7 +11,8 @@ Given a list of movement instructions for H, determine the number of nodes that 
 
 ## Test input
 
-```R 4
+```
+R 4
 U 4
 L 3
 D 1

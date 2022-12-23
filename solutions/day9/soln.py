@@ -5,6 +5,10 @@ AoC 2022 Day 9 - Heads and Tails
 
 import sys
 
+class Movement:
+    way: str
+    dist: str 
+
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
@@ -21,7 +25,17 @@ def move_head(point: tuple, line: str):
     """
     match line.split(" "):
         case ["U", dist]:
-            history = [(point[0], point[1]+1) for _ in dist]
+            history = [(point[0], point[1] + i + 1) for i in range(int(dist))] 
+        case ["D", dist]:
+            history = [(point[0], point[1] - i - 1) for i in range(int(dist))]
+        case ["L", dist]:
+            history = [(point[0] - i - 1, point[1]) for i in range(int(dist))]
+        case ["R", dist]:
+            history = [(point[0] + i + 1, point[1]) for i in range(int(dist))]
+        case _:
+            history = []
+    return history
+
 if __name__ == "__main__":
     fn = sys.argv[1]
     match fn:
@@ -34,4 +48,10 @@ if __name__ == "__main__":
     head = [0, 0]
     tail = head
     for line in load_input(fp):
-        head = move_head(line)
+        head_hist = move_head(head, line)
+        head = head_hist[-1]
+        if test:
+            print(f"line: {line}")
+            print(f"head pos: {head}")
+            print(f"head history: {head_hist}")
+        
