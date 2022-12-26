@@ -51,5 +51,11 @@ R 2
 
 ### Pseudocode
 
+Given history of the head position:
 
+- compare tail position to current head position
+- tail only updates position if head is not adjacent:
+  - if head/tail share the same row or column, check for dist_man > 1; if yes, move the column or row towards head
+  - if head/tail do not share same row/col, check for dist_man > 2; if yes, move tail diagonally towards head
+  - keep list of tail position history
 
