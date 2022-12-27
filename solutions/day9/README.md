@@ -80,3 +80,11 @@ How many unique positions will the 9th tail visit?
 - repeat until the 9th tail, get list of xys
 - save the last tail's list of positions
 
+### Insights
+
+- zip/enumerate returns a new iterable
+  - part of the idea here is that python does not want you to change the iterable *as it's being iterated*
+- use prev_path as `head_hist` of next knkot
+- include head as part of the whole collection of paths and positions
+
+answer: 2665
