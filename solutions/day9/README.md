@@ -59,3 +59,24 @@ Given history of the head position:
   - if head/tail do not share same row/col, check for dist_man > 2; if yes, move tail diagonally towards head
   - keep list of tail position history
 
+Answer: 6296
+
+## Part two
+
+Instead of having only two knots, one head and one tail, now we have ten knots: one head and nine tails. Each tail follows the knot in front the same way the first tail follows the head.
+
+How many unique positions will the 9th tail visit?
+
+### Pseudocode
+
+- I have nine tails now
+  - i.e. nine pairs of (head, tail) pairs
+  - only interested in the last tail
+  - does this only change the distance limit?
+  - no, it changes more than that; the direction it should move in depends on the directions that came before
+- move the head, get the list of xy's
+- move the tail, get list of xy's
+- move tail+1, given list of tail[0] xy's
+- repeat until the 9th tail, get list of xys
+- save the last tail's list of positions
+

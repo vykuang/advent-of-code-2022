@@ -5,10 +5,6 @@ AoC 2022 Day 9 - Heads and Tails
 import math
 import sys
 
-class Movement:
-    way: str
-    dist: str 
-
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
@@ -79,33 +75,35 @@ def find_dist(a, b) -> float:
     dy = a[1] - b[1]
     return math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
 
-                
-    
 if __name__ == "__main__":
     fn = sys.argv[1]
     match fn:
-        case "test" | "input":
+        case "test" | "input" | "test2":
             fp = f"{fn}.txt"
-            test = fn == "test" 
+            test = "test" in fn
         case _:
             raise ValueError(f"{fn} cannot be used")
             
+    LEN_ROPE = 10
     # initialize position at origin
     head = (0, 0)
-    tail = head
-    tail_hist = []
-    tail_hist.append(tail)
+    rope = [head for _ in range(LEN_ROPE)]
+    rope_hists = [{head} for _ in range(LEN_ROPE)]
     for line in load_input(fp):
-        head_hist = move_head(head, line)
-        tail_hist.extend(move_tail(tail, head_hist))
-        head = head_hist[-1]
-        if tail_hist:
-            tail = tail_hist[-1]
+        rope_hists[0] = move_head(rope[0], line)
+        rope[0] = rope_hists[0][-1]
+        for i, (tail_hist, tail) in enumerate(zip(rope_hists, rope)):
+            if i < 1: # skip the head in the beginning
+                pass
+            else:
+                path = move_tail(tail, rope_hists[i-1])
+                if path:
+                    tail = path[-1]
+                    tail_hist.update(path)
         if test:
             print(f"line: {line}")
-            print(f"head pos: {head}")
-            print(f"head history: {head_hist}")
-            print(f"tail pos: {tail}")
-            print(f"tail history: {tail_hist}")
-    tail_pos_unique = set(tail_hist)
-    print(f"tail has been to {len(tail_pos_unique)} points")
+            print(f"head pos: {rope[0]}")
+            print(f"head history: {rope_hists[0]}")
+            print(f"tail pos: {rope[-1]}")
+            print(f"tail history: {rope_hists[-1]}")
+    print(f"tail has been to {len(rope_hists[-1])} points")
