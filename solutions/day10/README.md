@@ -75,10 +75,26 @@ Now we're matching `cycle` and `val`; if pos = cycle - 1 matches any of
 
 - val - 1
 - val
-- val + `
+- val + 1
 
 that position becomes `#`; otherwise it's `.`; use `row += "#"`
 
 Increase row when `cycle % PERIOD == 0`, i.e. start a new row, `rows.append[row]; row = ""`
 
-Before I just skipped the cycle. Now do i need to keep track of every cycle??? CRT is still drawing pixels based on pos = cycle - 1. i also appended the signal early...I think I just need to draw two for each `addx` instructuion. Make a `draw_pixel` function that...
+Before I just skipped the cycle. Now do i need to keep track of every cycle??? CRT is still drawing pixels based on pos = cycle - 1. i also appended the signal early...I think I just need to draw two for each `addx` instruction. Make a `draw_pixel` function that...
+
+- if `val` matches pos, add `#`
+- if not, add `.`
+- if pos % PERIOD == 0, start new row
+- `pos` is determined *during* the cycle, and instructions complete at *end* of cycle
+
+### insight
+
+- returning successive chunks of a list:
+  ```py
+  def chunks(lst, period):
+      for i in range(0, len(lst), period):
+          yield lst[i:i+period]
+  ```
+- `cycle - 1` is not always `pos` since `pos` loops back after 40
+- increment cycle before drawing the second character if instruction is add
