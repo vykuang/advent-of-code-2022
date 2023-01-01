@@ -112,3 +112,16 @@ Looks like popular solutions touched on the following concepts:
 - A\* algorithm
 - Reversing the path
 - using complex numbers (again) to represent grid coordinates
+
+### Insights
+
+- finding children nodes requires knowing height in numeric
+- finding `E` requires symbolic form
+  - should our class include both forms? 
+  - if the other is simply a dict.get, probably don't need it
+  - define `find_children()` inside `path_find()`, and include `hmap` in `path_find()` args to pass into `find_children`
+- use built-in `ord()` to get integer rep of a unicode character
+- build a `dict` such that `grid.get(complex_coord)` returns the character
+- check for edges to determine if childrens exist, not just height diff
+- need a `set` to store visited coordinates
+- Check height for 'E' as well
