@@ -85,6 +85,25 @@ This effectively collects nodes as it works its way down, and right from the lef
 
 Breadth-first approach (BFS). Use a FIFO queue to collect the children of nodes at each depth, so that we know the order in which to visit them
 
+1. start from root; mark as visited, push to queue
+1. while queue:
+  a. remove node from front (node `S` will be first)
+  a. add node to BFS traversal order
+  a. push adjacent children nodes into queue
+1. if the node popped from front of queue is the one we want, i.e. `E`, return
+
+Another wrinkle here is we need the *depth* from `S` to `E`; need a counter to keep track of the depth.
+
+In addition, not all children nodes are *adjacent*, due to the height restriction. Only child nodes with heights <= current node + 1 can be considered.
+
+In the end all the above describes an approach to go through the whole graph, but we want the shortest path. How will we know it's the shortest? It's just the way it is. How will we know the depth? We need to keep track of the parent of each node discovered. Once we find `E`, we just iterate through the parents to find the depth. And again, we know that when we find `E` via BFS, it will be the first possible way to reach it, and thus the shortest.
+
+Dijkstra's algorithm adapts BFS to do so
+
+### Dijkstra's algorithm
+
+### Common threads in other solutions
+
 Looks like popular solutions touched on the following concepts:
 
 - BFS
