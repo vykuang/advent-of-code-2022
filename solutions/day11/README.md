@@ -83,3 +83,26 @@ Make a class of monkeys? Put them in a list? Make methods for them to go through
   - `.extend()` [items] for each `id`
 - repeat for every monkey
 - repeat for `n` rounds
+
+## Part two
+
+- worry no longer divided by 3 after each inspection
+- worry levels will need to be kept track of another way
+- rounds up to 10000
+
+## Solution two
+
+Instead of using the `worry_op` to multiply out the numbers, and then test divisibility, we need to find another way.
+
+Even if rounds exceed 10000, the only ops we're concerned about is multiplication
+
+- if not `mul`, carry out `worry_op` as usual
+- if `mul`, append as list of factors???
+  - what if that item has a different operation after???
+- the whole reason we need to keep track of `worry` is to carry out the div test, so that we know who will receive that item- when checking divisibility, we only need to check the tail-end of a number.
+  - e.g. div by 13
+  - we don't need to check beyond 130,000 (as an arbitrary example)
+  - to check if 194,241 is div by 13, first subtract by 130,000, and check the result: 61,241
+  - these truncations will not affect plus or minus
+    - but it will affect future mul/div???
+- using clever div rules that are hard-coded for each number still involves knowing the initial number to begin with
