@@ -25,6 +25,7 @@ class Monkey:
         self.toss_test = self.parse_toss_test(toss_test=toss_test)
         self.recvs = [rec_b, rec_a]
         self.item_count = 0
+        self.lcm_div = 1
 
     def parse_worry_op(self, worry_op):
         logger.debug(f"parse_worry_op input: {worry_op}")
@@ -32,20 +33,20 @@ class Monkey:
         if arg.isdigit():
             arg = int(arg)
         else:
-            return lambda x: int((x ** 2) / 3)
+            return lambda x: (x ** 2) % self.lcm_div
         match op:
             case '+':
-                return lambda x: int((x + arg) / 3)
-            case '-':
-                return lambda x: int((x - arg) / 3)
-            case '/':
-                return lambda x: int(x / arg / 3)
+                return lambda x: (x + arg) % self.lcm_div
+#             case '-':
+#                 return lambda x: int((x - arg) / 3)
+#             case '/':
+#                 return lambda x: int(x / arg / 3)
             case '*':
-                return lambda x: int(x * arg / 3)
+                return lambda x: (x * arg) % self.lcm_div
                 
     def parse_toss_test(self, toss_test):
-        div_test = int(toss_test[-1])
-        return lambda x: not(bool(x % div_test))
+        self.div_test = int(toss_test[-1])
+        return lambda x: not(bool(x % self.div_test))
 
 
     def toss_item(self):
@@ -115,7 +116,14 @@ if __name__ == "__main__":
             case []:
                 logger.debug("blank line detected")
     logger.debug(f"monkeys recorded: {len(monkeys)}")
-    for _ in range(20):
+    divisors = [monkeys[label].div_test for label in monkeys]
+    mul = lambda x, y: x * y 
+    lcm_div = reduce(mul, divisors)
+    # attach this lcm_div to all monkey instances
+    for label in monkeys:
+        monkeys[label].lcm_div = lcm_div
+
+    for _ in range(10000):
         for i in range(len(monkeys)):
             items_tossed = monkeys[i].toss_item()
             for monkey in items_tossed:
@@ -123,5 +131,5 @@ if __name__ == "__main__":
 
     item_counts = sorted([monkeys[label].item_count for label in monkeys], reverse=True)
     lim = 2
-    biz = reduce(lambda x, y: x * y, item_counts[:lim])
+    biz = reduce(mul, item_counts[:lim])
     print(f'monkey biz: {biz}')

@@ -88,3 +88,11 @@ How many unique positions will the 9th tail visit?
 - include head as part of the whole collection of paths and positions
 
 answer: 2665
+
+## Other solutions
+
+- Instead of storing coordinates as a tuple of ints, store as *a single complex number*, using `real + j` notation.
+  - imaginary axis will be used for up and down
+- Create a dict that maps direction to those complex unit vectors:
+  `dir = {'U': 1j, 'D': -1j, ...}`
+  - circumvents the legion of `if-elif` statements

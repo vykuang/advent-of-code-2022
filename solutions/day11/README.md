@@ -84,6 +84,8 @@ Make a class of monkeys? Put them in a list? Make methods for them to go through
 - repeat for every monkey
 - repeat for `n` rounds
 
+answer: 57838
+
 ## Part two
 
 - worry no longer divided by 3 after each inspection
@@ -106,3 +108,16 @@ Even if rounds exceed 10000, the only ops we're concerned about is multiplicatio
   - these truncations will not affect plus or minus
     - but it will affect future mul/div???
 - using clever div rules that are hard-coded for each number still involves knowing the initial number to begin with
+
+### insight
+
+- worries never actually go down:
+  - only `+` or `*`
+  - this preserves a property called **congruence**
+- congruence is important because it allows us to truncate the worry levels
+- truncate by the *product of all potential divisors*, or more generally the least common multiple
+  - since all divisors here are prime, it's also just the product
+
+answer: 15050382231
+
+Note that using part 2 methods will return slightly different answers than part 1 methods, re: test inputs
