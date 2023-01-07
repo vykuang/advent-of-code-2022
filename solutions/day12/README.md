@@ -125,3 +125,19 @@ Looks like popular solutions touched on the following concepts:
 - check for edges to determine if childrens exist, not just height diff
 - need a `set` to store visited coordinates
 - Check height for 'E' as well
+- SOURCE IS NOT AT (0, 0)!!!
+  - Need to find it first
+
+answer: 383
+
+## Part two
+
+Instead of considering only `S`, consider all nodes with elevation `a`: what is the shortest path amongst all the nodes with elevation `a`?
+
+### Execution
+
+Dijkstra's algorithm can also build a map, so if we extended our code to include the map-making portion, we can record all path lengths from `a`.
+
+To extend, remove the `E` check, and start from `E` instead. Once our `visited` dict is complete (unvisited empty), search for the minimum distance within the `a`s
+
+answer: 377

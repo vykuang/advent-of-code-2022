@@ -23,38 +23,51 @@ class PathNode:
     def __repr__(self):
         return str(self.coords)
 
-def path_find(root_pos: complex, grid: dict) -> PathNode:
+def path_find(root_pos: complex, grid: dict):
     """
     Given root node, the grid, and the height dict,
     find the shortest way to "E"
-    """
-    
-    root = PathNode(get_height(grid.get(root_pos)), root_pos)
-    visited = {root_pos}
-    unvisited = deque([root])
-    logger.debug(f"root.coords: {root.coords}\theight: {root.height}")
+    """    
+    # 1. mark all nodes unvisited: use grid, which contains all nodes in dict
+    unvisited = grid.copy()
+    # 2. create a dict of {coord: dist}, and initialize all dist to some
+    # arbitrary large value
+    # also acts as set of visited nodes
+    visited = defaultdict(lambda: 1000000)
+    visited[root_pos] = 0
+    current = root_pos
+    # 4. remove current from unvisited set
+    # 5. if target is found, exit
     while unvisited:
-        current = unvisited.popleft() # FIFO queue
-        logger.debug(f"current.coords: {current.coords}\tht: {current.height}")
-        if grid.get(current.coords) == "E":
-            return current
-        # children = find_children(current.coords)
-        candidate_coords = [current.coords + way for way in [-1, 1, +1j, -1j]]
+        # 6. set as current the unvisited node marked with smallest tentative dist
+        current = sorted(unvisited, key=lambda k: visited[k])[0]
+        letter = unvisited.pop(current)
+#        if letter == "S": # for part one
+#            break
+        logger.debug("------------------")
+        print(f"\rcurrent node and dist: {current}, {visited[current]}", 
+            sep=" ", end=" ", flush=True)
+#         print(f"\tlen of visited nodes: {len(visited)}\tunvisited: {len(unvisited)}", sep=" ", end=" ", flush=True)
+        logger.debug(f"virgin nodes: {len(unvisited)}")
+        # 3. consider all children of current node
+        #    if new distance is smaller, update the distance
+        candidate_coords = [child for way in [-1, 1, +1j, -1j] 
+            if ((child := current + way) in unvisited) and (get_height(child) - get_height(current) >= -1)]
         logger.debug(f"candidates: {candidate_coords}")
-#         children_info = [(ht, coord) for coord in candidate_coords if (ht := hmap[grid[coord.real][coord.imag]]) - current.height <= 1]
-        children_info = [(ht, coord) for coord in candidate_coords
-            if ((ht := get_height(grid.get(coord, '{'))) - current.height <= 1)]
-        children = [PathNode(ht, coord, current) for (ht, coord) in children_info] 
-        for child in children:
-            if child.coords not in visited:
-                unvisited.append(child)
-        visited.add(current.coords)
+        logger.debug(f"candidate heights: {[get_height(c) - get_height(current) for c in candidate_coords]}")
+        dist = visited[current] + 1
+        for coord in candidate_coords:
+            if dist < visited[coord]:
+                visited[coord] = dist
+    
+    return current, visited[current], visited
 
-def get_height(ch: str) -> int:
+def get_height(coord: complex) -> int:
     """
     Use `ord()` to return int rep of string char
     Replaces 'S' with 'a' and 'E' with 'z'
     """
+    ch = grid.get(coord, '{')
     ch = ch.replace('S', 'a').replace('E', 'z')
     return ord(ch) - ord('a')
     
@@ -95,13 +108,13 @@ if __name__ == "__main__":
     # build dict to use grid.get(complex_coord) and bypass the need for
     # integer list indices
     grid = {get_coord(x, width): grid[x] for x in range(len(grid))}
-    logger.debug(f"{[item for item in grid][:5]}")
-    top = path_find(0j, grid)
-    logger.debug(f"E coord: {top.coords}")
-    parent_coord = top.coords
-    dist = 0
-    while top.coords != complex():
-        logger.debug(f"reversing coords:\t{top.coords}")
-        top = top.parent
-        dist += 1
+    logger.debug(f"{[item for item in grid]}")
+    print(f"grid size: {len(grid)}")
+    src = [coord for coord in grid if grid[coord] == "E"][0]
+    print(f"source coord: {src}")
+    top, dist, visited = path_find(src, grid)
+    print("E found")
+    logger.debug(f"E coord: {top}")
     print(f"shortest distance: {dist}")
+    shortest = min([visited[node] for node in visited if (grid[node] == "a") or (grid[node] == "S")])
+    print(f"part two: {shortest}")
