@@ -8,6 +8,7 @@ each file is a leaf
 """
 import sys
 
+
 def load_input(fp):
     """
     Reads in the text file at fp and returns a generator for
@@ -16,8 +17,10 @@ def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
             yield line
+
+
 class RootNode:
-    def __init__(self, name='root', size=0, children=None):
+    def __init__(self, name="root", size=0, children=None):
         self.name = name
         self.size = size
         self.children = []
@@ -41,7 +44,7 @@ class RootNode:
         Returns bool
         """
         return name in set([child.name for child in self.children])
-    
+
     def calc_size(self):
         """Calculates total size, including subdirectory"""
         if self.children:
@@ -57,6 +60,7 @@ class RootNode:
     def __repr__(self):
         return self.name
 
+
 class FileNode(RootNode):
     # Generic tree node to represent our file system
     def __init__(self, name, size=0, parent=None, children=None):
@@ -71,6 +75,7 @@ def parse_terminal(line: str) -> list:
     Returns a list containing each component
     """
     return line.split(sep=" ")
+
 
 def build_file_tree(lines):
     """
@@ -94,7 +99,9 @@ def build_file_tree(lines):
                 if not pwd.child_exist(name=args[2]):
                     child_node = FileNode(name=args[2], parent=pwd)
                 else:
-                    child_node = [child for child in pwd.children if child.name == args[2]][0]
+                    child_node = [
+                        child for child in pwd.children if child.name == args[2]
+                    ][0]
                 pwd = child_node
         elif args[0] == "dir":
             child_node = FileNode(name=args[1], parent=pwd)
@@ -105,9 +112,10 @@ def build_file_tree(lines):
             leaf_node = FileNode(name=args[1], parent=pwd, size=int(args[0]))
             if pwd.add_child(leaf_node):
                 file_tree.append(leaf_node)
-        else: # ls, ignore
+        else:  # ls, ignore
             pass
     return file_tree
+
 
 if __name__ == "__main__":
     fn = sys.argv[1]
@@ -119,7 +127,7 @@ if __name__ == "__main__":
     part_i = [node_size for node_size in dir_sizes if node_size <= 100000]
     part_i_ans = sum(part_i)
     # part ii - smallest dir >= size_diff
-    free_space = 7e7 - max(dir_sizes) 
+    free_space = 7e7 - max(dir_sizes)
     size_diff = 3e7 - free_space
     part_ii = [node for node in dir_sizes if node >= size_diff]
     part_ii_ans = min(part_ii)

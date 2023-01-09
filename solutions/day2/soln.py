@@ -9,7 +9,8 @@ def load_input(fp: str):
     """Loads the input file for compute"""
     with open(fp, "r") as f:
         for line in f.read().splitlines():
-            yield line 
+            yield line
+
 
 def make_score_dict(lose: int = 0, tie: int = 3, win: int = 6) -> dict:
     """Returns score dict based on puzzle rules"""
@@ -26,11 +27,12 @@ def make_score_dict(lose: int = 0, tie: int = 3, win: int = 6) -> dict:
     }
     return score_dict
 
+
 def make_decision_dict(scr_x: int = 1, scr_y: int = 2, scr_z: int = 3) -> dict:
     decision_dict = {
-        "A X": scr_z, # lose (X) to A: play Z
-        "A Y": scr_x, # tie to A: play X
-        "A Z": scr_y, # win vs A: play Y
+        "A X": scr_z,  # lose (X) to A: play Z
+        "A Y": scr_x,  # tie to A: play X
+        "A Z": scr_y,  # win vs A: play Y
         "B X": scr_x,
         "B Y": scr_y,
         "B Z": scr_z,
@@ -39,6 +41,7 @@ def make_decision_dict(scr_x: int = 1, scr_y: int = 2, scr_z: int = 3) -> dict:
         "C Z": scr_x,
     }
     return decision_dict
+
 
 def make_rps_dict(scr_x: int = 1, scr_y: int = 2, scr_z: int = 3) -> dict:
     """Returns score dict based on player choice"""
@@ -49,9 +52,10 @@ def make_rps_dict(scr_x: int = 1, scr_y: int = 2, scr_z: int = 3) -> dict:
     }
     return rps_dict
 
+
 if __name__ == "__main__":
     try:
-        fn = sys.argv[1] # test or input
+        fn = sys.argv[1]  # test or input
         fp = f"{fn}.txt"
         rps_dict = make_rps_dict()
         score_dict = make_score_dict()
@@ -69,7 +73,7 @@ if __name__ == "__main__":
                 print(f"line: {line}\tscore: {match_scr}")
                 print(f"flat score: {rps_scr}")
                 print(f"round total: {total_scr}")
-            rps2.append(rps_dict2[line[-1]]) # is it win, lose, or tie?
+            rps2.append(rps_dict2[line[-1]])  # is it win, lose, or tie?
             decision2.append(decision_dict[line])
             scores.append(total_scr)
         print(sum(scores))

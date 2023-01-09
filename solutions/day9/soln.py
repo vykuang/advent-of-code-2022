@@ -8,10 +8,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
             yield line
+
 
 def move_head(point: tuple, line: str):
     """Given a heading and distance, move the head and collect
@@ -24,7 +26,7 @@ def move_head(point: tuple, line: str):
     """
     match line.split(" "):
         case ["U", dist]:
-            history = [(point[0], point[1] + i + 1) for i in range(int(dist))] 
+            history = [(point[0], point[1] + i + 1) for i in range(int(dist))]
         case ["D", dist]:
             history = [(point[0], point[1] - i - 1) for i in range(int(dist))]
         case ["L", dist]:
@@ -34,6 +36,7 @@ def move_head(point: tuple, line: str):
         case _:
             history = []
     return history
+
 
 def move_tail(tail: tuple, head_hist: list):
     """
@@ -51,12 +54,12 @@ def move_tail(tail: tuple, head_hist: list):
     logger.debug(" - - - - - - ")
     logger.debug(f"initial pos: {tail_hist}")
     for head in head_hist:
-    # same row/col?
+        # same row/col?
         logger.debug(f"tail @ {tail}\thead @ {head}")
         if tail == head:
             continue
 
-        if find_dist(head, tail) >= 2.0: 
+        if find_dist(head, tail) >= 2.0:
             # move tail and update list
             logger.debug("move tail")
             x_diff = head[0] - tail[0]
@@ -76,6 +79,7 @@ def move_tail(tail: tuple, head_hist: list):
             logger.debug(f"tail path: {tail_hist}")
     return tail_hist
 
+
 def find_dist(a, b) -> float:
     """Returns cartesian distance between a and b
     a, b: tuple(x, y)
@@ -83,6 +87,7 @@ def find_dist(a, b) -> float:
     dx = a[0] - b[0]
     dy = a[1] - b[1]
     return math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+
 
 if __name__ == "__main__":
     fn = sys.argv[1]
@@ -111,7 +116,7 @@ if __name__ == "__main__":
         logger.debug(f"line: {line}")
         for i, [tail_hist, tail] in enumerate(zip(rope_hists, rope)):
             logger.debug(f"knot {i} @ {tail}")
-            if i < 1: # skip the head in the beginning
+            if i < 1:  # skip the head in the beginning
                 path = move_head(tail, line)
             else:
                 path = move_tail(tail, prev_path)
@@ -124,5 +129,5 @@ if __name__ == "__main__":
             logger.debug(f"path: {path}")
             logger.debug(f"knot {i} now @ {rope[i]}")
             logger.debug("----------------------")
-    end_knot_pos = set(rope_hists[-1])    
+    end_knot_pos = set(rope_hists[-1])
     print(f"tail has been to {len(end_knot_pos)} points")

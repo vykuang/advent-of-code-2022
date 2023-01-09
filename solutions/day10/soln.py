@@ -8,30 +8,33 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
             yield line
+
 
 def draw_pixel(cycle: int, val: int, period: int = 40) -> str:
     """Determine which pixel to draw by judging cycle and val
     Returns the correct pixel
     """
     pos = (cycle - 1) % period
-    if (abs(pos - val) == 1) | (pos == val): 
+    if (abs(pos - val) == 1) | (pos == val):
         return "#"
     else:
         return "."
+
 
 if __name__ == "__main__":
     fn = sys.argv[1]
     match fn:
         case "test" | "input":
             fp = f"{fn}.txt"
-            test = fn == "test" 
+            test = fn == "test"
         case _:
             raise ValueError(f"{fn} cannot be used")
-            
+
     if test:
         logger.setLevel(logging.INFO)
         ch = logging.StreamHandler()
@@ -58,9 +61,11 @@ if __name__ == "__main__":
 
             case ["addx", arg]:
                 # check for edge cases here
-                if (cycle - FIRST_PERIOD) % PERIOD == PERIOD - 1 or cycle == FIRST_PERIOD-1:
+                if (
+                    cycle - FIRST_PERIOD
+                ) % PERIOD == PERIOD - 1 or cycle == FIRST_PERIOD - 1:
                     logger.debug("SIGNAL STRENGTH COLLECTED")
-                    sigs.append((1+cycle)* val)
+                    sigs.append((1 + cycle) * val)
                 # part two
                 # draw additional pixel for the extra cycle addv takes
                 cycle += 1
@@ -75,10 +80,8 @@ if __name__ == "__main__":
             sigs.append(cycle * val)
         logger.debug(f"cycle after inst: {cycle}\treg:{val}")
 
-
     print(f"signal strength collected:\t{sigs}")
     print(f"sum: {sum(sigs)}")
 
     for i in range(0, len(row), PERIOD):
-        print(row[i:i+PERIOD])
-
+        print(row[i : i + PERIOD])

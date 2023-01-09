@@ -5,15 +5,17 @@ Camp cleanup
 """
 import sys
 
+
 def load_input(fp: str):
     """
     Generates line-by-line the input file
     """
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
-            yield line 
+            yield line
 
-def parse_sections(line: str, pair_delim: str = ',', section_delim: str = '-') -> tuple:
+
+def parse_sections(line: str, pair_delim: str = ",", section_delim: str = "-") -> tuple:
     """
     Parse the line into two sections, given the delimiter, and then
     into the section IDs
@@ -23,9 +25,9 @@ def parse_sections(line: str, pair_delim: str = ',', section_delim: str = '-') -
     b_lb, b_ub = [int(bound) for bound in sec_b.split(sep=section_delim)]
     return a_lb, a_ub, b_lb, b_ub
 
+
 def check_subset(a_lb, a_ub, b_lb, b_ub) -> bool:
-    """Does all of A fit into B, or vice versa?
-    """
+    """Does all of A fit into B, or vice versa?"""
     if a_lb >= b_lb and a_ub <= b_ub:
         return True
     elif b_lb >= a_lb and b_ub <= a_ub:
@@ -34,6 +36,7 @@ def check_subset(a_lb, a_ub, b_lb, b_ub) -> bool:
     else:
         return False
 
+
 def check_overlap(a_lb, a_ub, b_lb, b_ub) -> bool:
     """Checks for any overlap between a and b
     Scenarios to check:
@@ -41,9 +44,10 @@ def check_overlap(a_lb, a_ub, b_lb, b_ub) -> bool:
     2. vice versa: both b_lb and b_ub < a_lb
     """
     if (a_lb < b_lb and a_ub < b_lb) or (b_lb < a_lb and b_ub < a_lb):
-        return False 
+        return False
     else:
         return True
+
 
 if __name__ == "__main__":
     fp = f"{sys.argv[1]}.txt"

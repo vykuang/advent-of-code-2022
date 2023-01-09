@@ -9,16 +9,19 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
             yield line
 
+
 def delta_sign(a, b):
     """
     Returns 1 if b > a, and -1 if b < a
     """
-    return int((b - a)/abs(b - a))
+    return int((b - a) / abs(b - a))
+
 
 def make_rock(rock_line: list) -> np.array:
     """
@@ -33,11 +36,11 @@ def make_rock(rock_line: list) -> np.array:
         nx, ny = rock_line[i + 1]
         if x != nx:
             fill = [(dx, y) for dx in range(x, nx, delta_sign(x, nx))]
-#             x_fill = np.array(range(x, nx, delta_sign(x, nx)))
-#             y_fill = np.full(len(x_fill), y)
-#         else:
-#             y_fill = np.array(range(y, ny, delta_sign(y, ny)))
-#             x_fill = np.full(len(y_fill), x)
+        #             x_fill = np.array(range(x, nx, delta_sign(x, nx)))
+        #             y_fill = np.full(len(x_fill), y)
+        #         else:
+        #             y_fill = np.array(range(y, ny, delta_sign(y, ny)))
+        #             x_fill = np.full(len(y_fill), x)
         else:
             fill = [(x, dy) for dy in range(y, ny, delta_sign(y, ny))]
         logger.debug(f"rock segment: ")
@@ -45,15 +48,16 @@ def make_rock(rock_line: list) -> np.array:
         edges.extend(fill)
     return edges
 
+
 if __name__ == "__main__":
     fn = sys.argv[1]
     match fn:
         case "test" | "input":
             fp = f"{fn}.txt"
-            test = fn == "test" 
+            test = fn == "test"
         case _:
             raise ValueError(f"{fn} cannot be used")
-            
+
     if test:
         logger.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
@@ -61,7 +65,9 @@ if __name__ == "__main__":
         logger.addHandler(ch)
     else:
         logger.setLevel(logging.INFO)
-    convert_xy = lambda xy_str: list(int(xy) for xy in xy_str.split(','))
-    rocks = [[convert_xy(xy) for xy in line.split() if ',' in xy] for line in load_input(fp)]
+    convert_xy = lambda xy_str: list(int(xy) for xy in xy_str.split(","))
+    rocks = [
+        [convert_xy(xy) for xy in line.split() if "," in xy] for line in load_input(fp)
+    ]
     cave = [make_rock(edge) for edge in rocks]
     logger.debug(f"cave:\n{cave}")
