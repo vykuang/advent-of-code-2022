@@ -4,8 +4,9 @@ AoC 2022 Day 14 - Falling sands
 """
 import sys
 import logging
-
+from itertools import chain
 import numpy as np
+from scipy.sparse import coo_matrix
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def delta_sign(a, b):
     return int((b - a) / abs(b - a))
 
 
-def make_rock(rock_line: list) -> np.array:
+def make_rock_xy(rock_line: list) -> np.array:
     """
     Converts list of vertices into coordinates of edges
 
@@ -46,6 +47,7 @@ def make_rock(rock_line: list) -> np.array:
         logger.debug(f"rock segment: ")
         logger.debug(fill)
         edges.extend(fill)
+
     return edges
 
 
@@ -65,9 +67,21 @@ if __name__ == "__main__":
         logger.addHandler(ch)
     else:
         logger.setLevel(logging.INFO)
+    
+    # converts from "x,y" to [x, y]
     convert_xy = lambda xy_str: list(int(xy) for xy in xy_str.split(","))
     rocks = [
         [convert_xy(xy) for xy in line.split() if "," in xy] for line in load_input(fp)
     ]
-    cave = [make_rock(edge) for edge in rocks]
+    cave = [make_rock_xy(edge) for edge in rocks]
     logger.debug(f"cave:\n{cave}")
+    cave = list(chain(*cave))
+    logger.debug(f"chained cave:\n{cave}")
+    ys, xs = list(zip(*cave))
+    logger.debug(f"xs:\n{xs}\nys:\n{ys}")
+    cave_sparse = coo_matrix((np.ones(len(xs)), (xs, ys)), dtype=bool)
+    logger.debug(f"cave map: \n{cave_sparse.toarray()[:,min(ys):]}")
+    # # coo = [coo_matrix((np.ones(len(xs)), (xs, yx))) for (xs, yx) in cave]
+    # logger.debug(f"coo_matrices:\n{coo[0].toarray()}")
+    # logger.debug(coo[0])
+

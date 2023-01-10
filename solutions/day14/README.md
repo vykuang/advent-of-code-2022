@@ -68,4 +68,6 @@ We can use a numpy array to model the rocks and sands; set up poetry env for aoc
   - `x, y = zip(*rock_line)` to transpose
   - `np.array` can straight up take `rock_line` as input, and creates an array where each row is one set of `xy`s, column 0 is `x`, and col 1 is `y`
   - manipulate as a matrix with [r1:r2, c1:c2] slice operator
-- if dx, 
+- taking `and` of all resulting rock line arrays seems difficult.
+  - Probably best to collect all rock coordinates into a single tuple, and build one `coo_matrix` from that
+    - use `itertools.chain` to collect all the `x, y` tuples into one list, then `list(zip(*xys))` to break into only xs and yx
