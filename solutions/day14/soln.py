@@ -6,9 +6,10 @@ import sys
 import logging
 from itertools import chain
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, dok_matrix
 
 logger = logging.getLogger(__name__)
+ch = logging.StreamHandler()
 
 
 def load_input(fp):
@@ -24,31 +25,37 @@ def delta_sign(a, b):
     return int((b - a) / abs(b - a))
 
 
-def make_rock_xy(rock_line: list) -> np.array:
+def make_rock_xy(rock_line: list) -> list:
     """
     Converts list of vertices into coordinates of edges
 
-    Returns a bool array
+    Returns a list of tuple coordinates
     """
-    logger.debug(f"new rock_line:")
+    logger.debug("new rock_line:")
     edges = [tuple(rock_line[-1])]
     for i in range(len(rock_line) - 1):
         x, y = rock_line[i]
         nx, ny = rock_line[i + 1]
         if x != nx:
             fill = [(dx, y) for dx in range(x, nx, delta_sign(x, nx))]
-        #             x_fill = np.array(range(x, nx, delta_sign(x, nx)))
-        #             y_fill = np.full(len(x_fill), y)
-        #         else:
-        #             y_fill = np.array(range(y, ny, delta_sign(y, ny)))
-        #             x_fill = np.full(len(y_fill), x)
         else:
             fill = [(x, dy) for dy in range(y, ny, delta_sign(y, ny))]
-        logger.debug(f"rock segment: ")
-        logger.debug(fill)
+        logger.debug(f"rock segment: \n{fill}")
         edges.extend(fill)
 
     return edges
+
+
+def find_sand_rest(origin: tuple(int, int), cave: dok_matrix) -> tuple(int, int) | None:
+    """
+    Given origin sand coordinates and the existing cave map,
+    determine the coordinate of the resting position
+
+    Returns
+    -------
+    xy: tuple(int, int) | None
+        resting coordinate, if exists; None if it does not.
+    """
 
 
 if __name__ == "__main__":
@@ -61,13 +68,14 @@ if __name__ == "__main__":
             raise ValueError(f"{fn} cannot be used")
 
     if test:
-        logger.setLevel(logging.DEBUG)
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-        logger.addHandler(ch)
+        loglevel = logging.DEBUG
     else:
-        logger.setLevel(logging.INFO)
-    
+        loglevel = logging.INFO
+
+    logger.setLevel(loglevel)
+    ch.setLevel(loglevel)
+    logger.addHandler(ch)
+
     # converts from "x,y" to [x, y]
     convert_xy = lambda xy_str: list(int(xy) for xy in xy_str.split(","))
     rocks = [
@@ -75,13 +83,26 @@ if __name__ == "__main__":
     ]
     cave = [make_rock_xy(edge) for edge in rocks]
     logger.debug(f"cave:\n{cave}")
+
     cave = list(chain(*cave))
     logger.debug(f"chained cave:\n{cave}")
+
     ys, xs = list(zip(*cave))
     logger.debug(f"xs:\n{xs}\nys:\n{ys}")
+
+    # can also consider dict-of-keys array for construction
+    # coo does not allow indexing, but dok does
+    # however coo construction is considered fast
     cave_sparse = coo_matrix((np.ones(len(xs)), (xs, ys)), dtype=bool)
     logger.debug(f"cave map: \n{cave_sparse.toarray()[:,min(ys):]}")
-    # # coo = [coo_matrix((np.ones(len(xs)), (xs, yx))) for (xs, yx) in cave]
-    # logger.debug(f"coo_matrices:\n{coo[0].toarray()}")
-    # logger.debug(coo[0])
 
+    cave_sparse = cave_sparse.todok()
+    # inverse of problem spec to match (x, y) convention to (row, col)
+    ORIGIN = (0, 500)
+    sand_xy = ORIGIN
+    sand_count = 0
+    while sand_xy := find_sand_rest(ORIGIN, cave_sparse):
+        cave_sparse[sand_xy] = True
+        sand_count += 1
+
+    print(f"sands to abyss: {sand_count}")

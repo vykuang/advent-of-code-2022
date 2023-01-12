@@ -43,6 +43,8 @@ Sand always tries to move down, until it meets rock or sand in its downward path
 - If it does meet, it will first try to go diagonally left
 - if it is not able, it will then try diagonally right
 - if neither are available, it will come to a stop
+- if at any point, `down` becomes available again, it will move down
+  - it *always* tries to go down, then diag-left, then diag-right
 - next unit of sand starts to come down
 
 Simulate how many units of sand comes to rest before falling past all rock structures
@@ -71,3 +73,22 @@ We can use a numpy array to model the rocks and sands; set up poetry env for aoc
 - taking `and` of all resulting rock line arrays seems difficult.
   - Probably best to collect all rock coordinates into a single tuple, and build one `coo_matrix` from that
     - use `itertools.chain` to collect all the `x, y` tuples into one list, then `list(zip(*xys))` to break into only xs and yx
+
+### Path detection
+
+Sand always drops from `500,0`, one at a time, after the previous sand comes to a rest.
+
+- Global array of the current rock + sand pos should be available
+- func takes that array, plus initial sand origin coordinate, and should output the rest coordinate
+  - if we do find that last sand, how will it know to stop?
+  - check by `sand_coord.y == max(ys)`
+    - return new `xy` if it stops;
+    - return `None` if it passes `max(ys)`
+- update the global map
+- repeat for next unit of sand
+- repeat until sand falls past *all rock structures*
+  
+### `find_sand_rest`
+
+- look down `origin.x` from `y=0` on `cave`;
+- at first encounter, go to path tree
