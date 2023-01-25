@@ -9,7 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
 
-
 def load_input(fp):
     with open(fp) as f_in:
         for line in f_in.read().splitlines():
@@ -35,3 +34,4 @@ if __name__ == "__main__":
 
     for line in load_input(fp):
         pass
+
