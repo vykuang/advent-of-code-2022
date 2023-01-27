@@ -44,7 +44,7 @@ def calc_reach(s: complex, reach: int, row: int):
         return None
 
 
-def beacon_elim(target: int, reach: list, sb_pairs: list = None):
+def beacon_elim(target: int, reach: list, sb_pairs: list, part2: bool = False):
     """
     Given a sorted list of left edges and their reach, find
     how many nodes cannot contain a beacon
@@ -67,14 +67,16 @@ def beacon_elim(target: int, reach: list, sb_pairs: list = None):
     """
     # sort by left edge
     reach_sorted = sorted(reach, key=lambda x: x[0])
-    b_search = [int(b.real) for _, b in sb_pairs if b.imag == target]
-    logger.debug(f"b_search list: {b_search}")
-    b_search = set(b_search)
-    logger.debug(f"b_search unique: {b_search}")
-    s_search = [int(s.real) for s, _ in sb_pairs if s.imag == target]
-    logger.debug(f"sensors on this row: {s_search}")
-    search = set(s_search) | b_search
-    logger.debug(f"search set: {search}")
+    
+    if not part2:
+        b_search = [int(b.real) for _, b in sb_pairs if b.imag == target]
+        logger.debug(f"b_search list: {b_search}")
+        b_search = set(b_search)
+        logger.debug(f"b_search unique: {b_search}")
+        s_search = [int(s.real) for s, _ in sb_pairs if s.imag == target]
+        logger.debug(f"sensors on this row: {s_search}")
+        search = set(s_search) | b_search
+        logger.debug(f"search set: {search}")
 
     beacon = None
     ### incorporate into the loop
@@ -99,7 +101,8 @@ def beacon_elim(target: int, reach: list, sb_pairs: list = None):
                 )
                 # update last subtotal accounting for overlap
                 # if left_prev:
-                totals[-1] += right_edge - right_prev
+                if not part2:
+                    totals[-1] += right_edge - right_prev
                 # else:
                 #     totals[-1] = right_edge - left_edge
                 # update right edge only if it extends the edge
@@ -107,27 +110,29 @@ def beacon_elim(target: int, reach: list, sb_pairs: list = None):
 
         elif (left_edge > right_prev + 1) or not totals:
             # new segment
-            totals.append(reach_new + 1)
+            if not part2:
+                totals.append(reach_new + 1)
             # update the edges
             left_prev = left_edge
             right_prev = right_edge = left_prev + reach_new
             logger.debug(
                 f"new segment: {reach_new} added\nleft_prev: {left_prev}\tright_edge: {right_edge}"
             )
-            if left_edge > 0:
+            if left_edge > 0 and left_edge <= 4000000:
                 beacon = complex(left_edge - 1, target)
 
         else:
             pass
 
         # check for beacons
-        for d in search.copy():
-            logger.debug(f"considering node {d}")
-            if left_edge <= d and d <= right_edge:
-                totals[-1] -= 1
-                search.discard(d)
-                logger.debug(f"device found within range at node {d}")
-                logger.debug(f"subtotal corrected to {totals[-1]}")
+        if not part2:
+            for d in search.copy():
+                logger.debug(f"considering node {d}")
+                if left_edge <= d and d <= right_edge:
+                    totals[-1] -= 1
+                    search.discard(d)
+                    logger.debug(f"device found within range at node {d}")
+                    logger.debug(f"subtotal corrected to {totals[-1]}")
 
         logger.debug(f"totals: {totals}")
     return sum(totals), beacon
@@ -146,13 +151,13 @@ def find_tuning(min_xy, max_xy, dists, sb_pairs):
             if (d := calc_reach(xy[0], reach, row))
         ]
         # enforce the coordinate limit in reaches
-        for i, (edge, reach) in enumerate(reaches):
-            if edge < min_xy:
-                logger.info(f"{edge} < {min_xy}: replace.")
-                reaches[i][0] = min_xy
-            if (right_lim := edge + reach) > max_xy:
-                reaches[i][1] = max_xy - right_lim
-                logger.info(f"{right_lim} > {max_xy}. new reach: {reaches[i][1]}")
+        # for i, (edge, reach) in enumerate(reaches):
+        #     if edge < min_xy:
+        #         logger.info(f"{edge} < {min_xy}: replace.")
+        #         reaches[i][0] = min_xy
+        #     if (right_lim := edge + reach) > max_xy:
+        #         reaches[i][1] = max_xy - right_lim
+        #         logger.info(f"{right_lim} > {max_xy}. new reach: {reaches[i][1]}")
         num_empty, beacon = beacon_elim(row, reaches, sb_pairs)
         if beacon:
             return beacon, int(beacon.real * 4000000 + beacon.imag)
@@ -183,6 +188,7 @@ if __name__ == "__main__":
     dists = [calc_man_dist(s, b) for s, b in sb_pairs]
     logger.debug(f"manhattan distances:\n{dists}")
     if p1:
+        row = 2000000
         reaches = [
             d
             for xy, reach in zip(sb_pairs, dists)
@@ -193,10 +199,11 @@ if __name__ == "__main__":
         print(f"empty nodes: {num_empty}\tbeacon xy: {beacon}")
 
     # part two
-    min_xy = 0
-    if test:
-        max_xy = 20
     else:
-        max_xy = 4000000
-    beacon, freq = find_tuning(min_xy, max_xy, dists, sb_pairs)
-    print(f"beacon loc: {beacon}\nfreq: {freq}")
+        min_xy = 0
+        if test:
+            max_xy = 20
+        else:
+            max_xy = 4000000
+        beacon, freq = find_tuning(min_xy, max_xy, dists, sb_pairs)
+        print(f"beacon loc: {beacon}\nfreq: {freq}")

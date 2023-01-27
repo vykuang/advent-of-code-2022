@@ -165,3 +165,50 @@ If we set left_prev = right_prev = 0...
 - update last subtotal to right_edge - right_prev
 
 How about this: hard set left_edge = 0, and the last right edge to 4000000, if larger
+
+### From reading solutions
+
+Since there is only *one* unique solution within the constraints, that means that this node *must* be adjacent to the sensors' detection radius. It cannot be two squares away, otherwise there will be multiple solutions. This drastically constrains our search space to only squares on the edges of detection diamonds (manhattan distance).
+
+1. Find all points *one unit outside* each sensor's detection range
+1. Check each candidate points to see if they can be reached by other sensors by comparing the distance to their reach
+1. Only look for points within (0, 0) and (4000000, 4000000)
+
+Without further optimization this could still return a large number of points given the large detection radius; a radius of 10 will return 100 points. From the given sensor/beacon locations there are 9e7+ candidate nodes to check...
+
+Next step is to look for the *intersections* of those lines (reach + 1). Again this is only because *there is only one unique solution*. Our beacon node *must lie on one of the (reach + 1) intersections*.
+
+#### Adaptive subdivide (quadrant search)
+
+1. parse sensor and beacon loc
+1. determine reach
+1. initiate stack with [((0, 0), (max, max))], a pair of coords
+1. pop the stack to retrieve most recent pair of coords, `xl` and `xh`
+1. if `xl == xh`, then these are the coords for the beacon; break
+1. otherwise, partition into 4 quad tree cells:
+  - `xm = (xl + xh) // 2`
+  - and then some crazy shit with itertools.product
+      - itertools.product creates a cartesian product of two input iterables
+      - product([1,2,3], ['a', 'b', 'c']) gives
+      
+      ```py
+          (1, 'a')
+        (1, 'b')
+        (1, 'c')
+        (2, 'a')
+        (2, 'b')
+        (2, 'c')
+        (3, 'a')
+        (3, 'b')
+        (3, 'c')
+      ```
+1. Anyway the idea of the quadrant search is to check if any of the quadrants is completely contained within the range of any sensor. If one quadrant is completely contained, mark it and move to next quad; if not completely contained, subdivide to four more quadrants and iterate, eventually leading to one cell
+1. To test `contains()`, simply check the *corners of the quadrants* vs each sensor's range; if all 4 corners are in, then all others must be also within the range due to the nature of manhattan distance
+
+### Original approach - Using edge and detection reach
+
+Returned 14324468153663, (sensor loc: 3581117+153663j) which was too high
+
+Removed section where I fudged the starting coordinate and end reach to fit the constraint, and the answer only took ... 10 minutes.
+
+12413999391794
