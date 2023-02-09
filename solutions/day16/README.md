@@ -63,5 +63,104 @@ tot = reduce(
     0)
 ```
 
+To collect all paths within depth=30, can use any of the depth-first search traversals
+
+- start at vertex `s`
+- *visit* vertex `s`
+- `s` is now current vertex `u`
+- travel along arbitrary edge `(u, v)`
+- if `v` is already visited, return to `u`
+  - travel to a different edge
+  - if all edges are travelled, backtrack to another previous vertex
+    - need to keep track of explored edges for each vertex?
+- if not, *visit* `v`, set as current, and travel to arbitrary edge
+
+DFS runs in `O(n_s + m_s)` time; stores graph in an adjacency list: for each node, store a list of adjacent neighbor nodes.
+
+[see here for animation](https://opendsa-server.cs.vt.edu/ODSA/Books/Everything/html/GraphTraversal.html)
+
+### Implementing the graph
+
+Because we're collecting all *paths*, not just all the valve nodes (which we already know), we're not simply running DFS on the valve nodes, we're running DFS on all the *different paths that can be taken*.
+
+From vertex `s`, in our case, *all nodes are accessible*, with varying time costs, or weights, associated with the arcs. At every child node, all *unvisited* nodes are also accessible, if `total_time < time_limit` 
+
+DFS on all the different *paths* will return an exhaustive list of all possibilities, by design
+
+As a prerequisite, this approach needs to know the shortest path between every pair of points. Use dijkstra to build the adjacency list, by starting from every vertex as origin:
 
 ```py
+adj_list = {
+    "A": {"B": 2, "C": 3, ...},
+    "B": {"A": 2, "C": 1, ...},
+    ...
+}
+```
+
+### Dijkstra (again)
+
+1. mark all nodes `unvisited` in a set
+1. assign to origin node a distance of 0, and all other nodes a tentative distance of `infinity` since they are not known yet. set initial node as current
+1. at current node, consider all unvisited neighbors
+  - assume we know the distances between all neighboring nodes
+  - `new_tentative_dist = current_node_dist + neighbor_dist`
+  - if `dist[neighbor] > new_tentative_dist` then update: `dist[neighbor] = new_tentative_dist`
+1. after considering all *unvisited* neighboring nodes, mark current node as `visited`, and remove from `unvisited` set
+1. If the target node has been marked as `visited`, or if the smallest tentative dist among unvisited nodes is `inf` (occurs when there is no conn b/w initial noe and remaining unvisited???), algorithm has finished
+1. else, repeat from 3
+  - pop the node from `unvisited` set with smallest tentative dist, and set as current
+  - consider all neighbors...
+
+### Floyd-Warshall
+
+Alternatively, use *Floyd-Warshall* for a dense graph, where most or all pairs are connected
+
+`scipy.sparse.csgraph` has `floyd_warshall` and `dijkstra` predefined, as does `networkx`
+
+- scipy requires adjacency matrix:
+  - in a graph with vertex set $U = {u_1, u_2, ..., u_n}$, adj_mat $A$ is a $n x n$ matrix
+  - $A_{ij}$ represents the distance between $(u_i, u_j)$
+  - 0 means no connection
+- we would need another dict to map the integer index to the name of the valve, `{valve_id: valve_index}` in order to represent as adjacency matrix
+
+### DFS
+
+Having built a dict of shortest paths for each point, now we collect each possible path and score them.
+
+From the start, all nodes are accessible, and remain accessible unless
+
+- a node has already been visited *in this path*, or
+- the current time + distance + valve opening time >= time_limit (30)
+
+How do we keep track whether a node has been visited *in this path*? The same node can be part of different paths, but it cannot be in the same path more than once.
+
+- keep hash of paths?
+
+In graph terminologies, we are looking for all **simple paths**: paths without repetition of vertices. *Non-simple* paths are those that include **cycles**, e.g. 1-3-1-4
+
+### Path-finding pseudo code
+
+Modifications to fit our volcano tunnels in bullet points
+
+- start from source vertex `s`; initialize as `current_path`, since it starts empty
+- check if neighbor `a` is in `current_path`
+  - neighbors are all nodes in graph not in `current_path`
+  - by this logic the check is redundant
+  - additional check: compare distance between current node and neighbor:
+    - if `time_remain + dist + 2 <= time_lim`, then it is viable
+    - else, even if we reach the valve and open it, there will not be enough time for the valve to count towards the total release.
+    - e.g. time_remain = 20, dist = 9; reach node at t=29, valve opens by t=30. time_open = 0
+- if pass, append to `current_path`
+  - also record `time_release = time_lim - time_remain`
+- from node `a`, check neighbor `g`
+- if pass, append `g` to `current_path`, and set `g` as current
+- from `g`, check `j`
+  - `a`, `s` are already in `current_path` and therefore not considered
+  - `j` does not pass due to time_limit
+    - `time_remain + dist[g][j] + 2 > time_lim`
+- return to `g`, check `k`, and remaining neighbors
+  - none meets the time limit
+- `s - a - g` is our path
+- return `[s: t1, a: t2, g: t3]`
+- how do I backtrack back to `a`, to check `j`, `k`, etc.?
+  - `yield` and `yield from` takes care of that
