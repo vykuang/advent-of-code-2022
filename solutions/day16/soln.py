@@ -1,35 +1,33 @@
-#! /usr/bin/env python
-"""
-AoC 2022 Day
-"""
-
-import sys
+#!/usr/bin/env python3
+from pathlib import Path
+import argparse
 import logging
-from collections import defaultdict
-from functools import reduce
+import sys
+from time import time_ns
 import re
-import time
+from dataclasses import dataclass
+from collections import defaultdict
+from itertools import combinations
+
 logger = logging.getLogger(__name__)
-ch = logging.StreamHandler()
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
-
+@dataclass
 class Valve:
-    def __init__(self, name='', rate=0, neighbors=None):
-        """To use in defaultdict, must set defaults"""
-        self.name = name
-        self.rate = rate
-        if neighbors:
-            self.neighbors = set(neighbors)
-        else:
-            self.neighbors = None           
-        
-    def __repr__(self):
-        return self.name
+    rate: int
+    neighbors: list
+    opened: bool = False
+    duration: int = 0
 
-def load_input(fp):
-    with open(fp) as f_in:
-        for line in f_in.read().splitlines():
-            yield line
+    def __hash__(self):
+        return hash((self.rate, self.neighbors))
+
+def read_line(fpath: str):
+    """Reads the input and yields each line"""
+    fpath = Path(fpath)
+    with open(fpath) as f:
+        yield from f
+
 
 def parse_valve_tunnel(line: str) -> list:
     """Parse input to return 
@@ -38,145 +36,114 @@ def parse_valve_tunnel(line: str) -> list:
     - neighbors: list[str]
     in the form of a Valve object
     """
-    v = re.compile('[A-Z]{2}')
-    r = re.compile('rate=(\d+)')
-    v_m = v.findall(line)
-    r_m = r.findall(line)
-    return Valve(v_m[0], int(r_m[0]), v_m[1:])
+    name, *neighbors = re.findall(r'[A-Z]{2}', line)
+    rate = int(re.findall(r'rate=(\d+)', line)[0])
+    return name, Valve(rate, neighbors)
+
+def dijkstra_valves(valves, root, target):
+    """
+    valves: dict
+        contains Valve objects, with rate and neighbors attr
+    root, target: str
+        name of valves; keys for valves dict
+    returns shortest distances between every pair of caves
+    """
+    # distance act as keys; caves are the values
+    dists = defaultdict(list)
+    dists[0].append(root)
+    visited = set()
+    while dists:
+        min_cost = min(dists.keys())
+        next_caves = dists.pop(min_cost)
+        for cave in next_caves:
+            if cave == target:
+                return min_cost
+            if cave in visited:
+                continue
+            for adj in valves[cave].neighbors:
+                if adj not in visited:
+                    dists[min_cost + 1].append(adj)
+
+    return None
+
+def find_tunnel_path(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30):
+    """
+    Look for all possible paths through the caves within the time limit
+    """
+    path = [root]
+    working_valves.remove(root)
+    time_remain = time_lim
+    # what valve to open next?
+    queue = [root]
+    while queue:
+        curr = queue.popleft()
+        for cave in working_valves:
+            # check if already opened
+            if cave in path:
+                continue
+            # check for time limit
+            if time_remain - dists[curr][cave] + 1 == time_lim :
+                # +1 to open valve
+                continue
+            # path.append(cave)
+            alt_time_remain = time_remain - dists[curr][cave] - 1
+            yield find_next_cave(path + cave, cave, alt_time_remain, working_valves, dists)
+
+def find_next_cave(path: list, curr: str, time_remain: int, working_valves: list, dists: dict, time_lim: int = 30):
+    """
+    Recursively find the next cave, until time limit is met
+    """
+    for cave in working_valves:
+        if cave in path:
+            continue
+        if time_remain - dists[curr][cave] + 1 == time_lim:
+            continue
+        else:
+            alt_time_remain = time_remain - dists[curr][cave] - 1
+            path.extend(find_next_cave(path + cave, cave, ))
+    # if none pass threshold, we've reached end of path given time limit
+    return cave
 
 
-def dijkstra_valves(graph: dict, source: str) -> dict:
-    """
-    Find shortest paths between all pairs of vertices.
-    Assumes all neighboring nodes have distance=1
-    
-    Parameters
-    ---------
-    graph: dict
-        dict of all nodes, with Node object as the value
-    source: str
-        name of source node
-    
-    Returns
-    -------
-    shortest_paths: dict
-        keyed by nodes, the dict contains the shortest distance to each neighboring node
-    """
-    # mark all nodes really far, and mark all nodes unvisited
-    dist = defaultdict(lambda: 1000) # {node1: dist1, node2: dist2, ...}
-    unvisited = list(graph.keys())
-    # prev = defaultdict(lambda: "")
-        
-    # print(f'unvisited:\n{unvisited}')
-    # 2. assign distance=0 to origin
-    dist[source] = 0
-    
-    while unvisited:
-        # pop node with lowest dist
-        current = sorted(unvisited, key=lambda x: dist[x])[0]
-        unvisited.remove(current)
-        
-        # consider each neighbor
-        for neighbor in graph[current].neighbors:
-            if neighbor in unvisited:
-                
-                if dist[neighbor] > (new_dist := dist[current] + 1):
-                    dist[neighbor] = new_dist
-                    # prev[neighbor] = current
-            
-    return dist
-
-def tunnel_dfs(graph: dict, current: str, path: defaultdict(int), time_remain: int = 30, time_lim: int = 30) -> list:
-    """
-    Search through all the possible paths in our volcano network
-    
-    Params
-    ------
-    graph: dict
-        dict of all Valve nodes which contains release rate and neighbors
-        
-    source: str
-        name of starting Valave node
-        
-    path: dict
-        current path, {valve1: t_remain1, valve2: t_remain2, ...}. If a valve
-        is in path, it has been visited in current path
-        
-    time_remain: int
-        time remaining at current node
-        
-    time_lim: int
-        time limit; accounts for 1 min valve opening and 1 min travelling
-        between valve nodes
-        
-    Returns
-    -------
-    valve_paths: list
-        contains dict {valve_id: time_release, ...} which represents each path
-        and the order and timing in which the valves were opened
-        e.g. if valve 'BB' was reached in minute 1, and opened by minute 2, the
-        first entry would be {"BB": 28, ...}
-    """
-    # print(f'current: {current}\ttime_remain: {time_remain}')
-    if not path:
-        # print('path is empty; initialize time_remain')
-        time_remain = time_lim
-        
-    # do path recording here
-    path[current] = time_remain
-    candidates = [node for node in tunnels 
-                  if (node not in path.keys()) 
-                  and (time_remain >= dists[current][node] + 2)]
-    # print(f'neighbors:\n{candidates}')
-    if candidates:
-        for node in candidates:
-            # yield from handles the fact that each tunnel_dfs call has a
-            # for node in candidates: yield ...
-            # t - dist - 1 accounts for valve opening
-            yield from tunnel_dfs(graph, node, path.copy(), time_remain - dists[current][node] - 1, time_lim)
-    else:
-        # no more viable candidates; end of path reached
-        # path_count += 1
-        # print(f'\r{path_count} paths found', end='', flush=True)
-        yield path
-        
-if __name__ == "__main__":
-    fn = sys.argv[1]
-    match fn:
-        case "test" | "input":
-            fp = f"{fn}.txt"
-            test = fn == "test"
-        case _:
-            raise ValueError(f"{fn} cannot be used")
-
-    if test:
-        loglevel = logging.DEBUG
-    else:
-        loglevel = logging.INFO
+def main(sample: bool, part_two: bool, loglevel: str):
+    """ """
     logger.setLevel(loglevel)
-    ch.setLevel(loglevel)
-    logger.addHandler(ch)
+    if sample:
+        fp = "sample.txt"
+    else:
+        fp = "input.txt"
+    logger.debug(f"loglevel: {loglevel}")
+    logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
-    t_a = time.time()
-    SOURCE = 'AA'
-    # parse puzzle input into valves
-    tunnels = {valve.name: valve
-                for line in load_input(fp)
-                if (valve := parse_valve_tunnel(line))}
-    
-    # build dict of shortest paths from each point
-    dists = {valve: dijkstra_valves(tunnels, valve) for valve in tunnels}
-    
-    paths = tunnel_dfs(
-        graph=tunnels,
-        current=SOURCE,
-        path=defaultdict(int),
-    )
-    totals = {"->".join(p.keys()): reduce(
-    lambda subtot, valve: subtot + p[valve] * tunnels[valve].rate, 
-    p, 0) for p in paths}
-    print(f"max pressure released: {max(totals.items(), key=lambda p: p[1])}")
-    t_b = time.time()
-    print(f"runtime: {t_b - t_a:3f} sec")
+    # read input
+    valves = {v[0]: v[1] for line in read_line(fp) if (v := parse_valve_tunnel(line.strip()))}
+    # execute
+    tstart = time_ns()
+    # find shortest paths between all valves
+    working_valves = [name for name, v in valves.items() if v.rate or name == 'AA']
+    dists = defaultdict(dict)
+    for root, target in combinations(working_valves, 2):
+        shortest = dijkstra_valves(valves, root, target)
+        dists[root][target] = shortest
+        # double sided dict
+        dists[target][root] = shortest
+
+    # given shortest paths between all *working* valves, plus src, find optimal path
+    # within the time limit
     
     
+
+    # output
+    logger.debug(f'dists:\n{dists}')
+    tstop = time_ns()
+    logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    opt = parser.add_argument
+    opt("--sample", "-s", action="store_true", default=False)
+    opt("--part_two", "-t", action="store_true", default=False)
+    opt("--loglevel", "-l", type=str.upper, default="info")
+    args = parser.parse_args()
+    main(args.sample, args.part_two, args.loglevel)
