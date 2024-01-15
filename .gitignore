@@ -2,3 +2,5 @@
 *.swp
 *.pyc
 .ipynb_checkpoints/
+**/*.txt
+
