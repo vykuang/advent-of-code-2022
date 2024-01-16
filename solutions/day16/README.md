@@ -164,3 +164,40 @@ Modifications to fit our volcano tunnels in bullet points
 - return `[s: t1, a: t2, g: t3]`
 - how do I backtrack back to `a`, to check `j`, `k`, etc.?
   - `yield` and `yield from` takes care of that
+
+### similarity to knapsack problem
+
+Given a knapsack that can hold 35 kg, what do you take to maximize value? Different approaches:
+
+- greedy: take the most valuable first
+    - however, this might miss more optimal approaches of taking more quantities of lesser valued items
+
+This is more akin to the traveling salesman problem: how do you travel between all the nodes in the shortest amount of time? This is an NP-complete problem
+
+### bfs
+
+Return (or yield) all possible paths that fit in the 30 min mark
+
+Don't think I can call this breadth-first search. Use `yield from` for all general cases, and `yield` for base case in recursion
+
+### part two - elephant in the room
+
+Instead of adding one, add two `(cave, time_remain)` to `path`, one for human, and one for elephant. 
+
+Add cave to human path as usual, from available pool. Then, from that same pool, choose cave for elephant, *taking into account where the elephant came from*. Only after appending two cave tuples do we recursively call the next level.
+
+Keep current cave and time_remain for both elephant and human
+
+Do we need to move on from the `for cave in working_valves` structure, if we need to choose two?
+
+And about what the asynchronous nature of the two agents moving through the tunnels? H could very well reach two in the time it takes for E to reach one
+
+### step by step
+
+1. Both start @ `AA`
+1. H chooses `JJ`, so E chooses `DD`
+1. E to `DD`, taking 2 min for travel and open
+1. H to `JJ`, taking 3 min for travel and open
+    - at this time, E is already moving toward another valve
+
+I think they have to be separate paths, with their own timer, but the two need to be cognizant of each other's progress to not repeat

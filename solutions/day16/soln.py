@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass
 from collections import defaultdict
 from itertools import combinations
+from functools import reduce
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -66,32 +67,55 @@ def dijkstra_valves(valves, root, target):
 
     return None
 
-def find_paths(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30):
+def find_paths(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
     """
     Look for all possible paths through the caves within the time limit
     """
-    logger.debug(f'working valves: {working_valves}')
+    # logger.debug(f'working valves: {working_valves}')
     path = [(root, 0)]
     working_valves = set(working_valves)
-    working_valves.discard('AA')
+    working_valves.discard(root)
     time_remain = time_lim
     # what valve to open next?
-    yield from find_cave(path, time_remain, working_valves, dists)
+    if elephant:
+        yield from find_cave_elephant(path: list, time_remain: int, working_valves: set, dists: dict)
+    else:
+        yield from find_cave(path, time_remain, working_valves, dists)
 
 def find_cave(path: list, time_remain: int, working_valves: set, dists: dict):
     """
     Recursively find the next cave, until time limit is met
     """
     for cave in working_valves:
-        logger.debug(f'path: {path}')
+        # f = input()
         time_req = dists[path[-1][0]][cave] + 1
+        # logger.debug(f'from {path[-1][0]} checking {cave}; req: {time_req}')
         if time_remain <= time_req:
             # yield if time's up
+            # logger.debug(f'times up: {path}')
             yield path
         else:
+            alt_time_remain = time_remain - time_req
             new_pool = working_valves.copy()
             new_pool.discard(cave)
-            yield from find_cave(path + [(cave, time_remain - time_req)], time_remain, new_pool, dists)
+            if new_pool:
+                # logger.debug(f'enough time; {alt_time_remain} left\nchoosing from {new_pool}')
+                yield from find_cave(path + [(cave, alt_time_remain)], alt_time_remain, new_pool, dists)
+            else:
+                # empty pool; all nodes visited
+                yield path + [(cave, alt_time_remain)]
+
+def find_cave_elephant(paths: list, time_remains: int, working_valves: set, dists: dict):
+    """
+    Now there's an elephant
+    """
+    for path, time_remain in zip(paths, time_remains):
+        while working_valves:
+            cave = working_valves.pop()
+            time_req = dists[path[-1][0]][cave] + 1
+            if time_remain <= time_req:
+                pass
+
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -123,11 +147,18 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # given shortest paths between all *working* valves, plus src, find optimal path
     # within the time limit
-    for tunnel in find_paths(working_valves, dists, 'AA', time_lim):
-        logger.debug(f'tunnel: {tunnel}')
+    # sums = []
+    # for tunnel in find_paths(working_valves, dists, 'AA', time_lim):
+        # logger.debug(f'tunnel: {tunnel}')
+        # tunnel format: [(valve, time_remain), ..., (valve_n, time_remain_0)]
+        # look for rate, multiply by time, sum the tuples
+        # sums.append(reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel, 0))
+    tunnels = [(tunnel, reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel, 0))
+            for tunnel in find_paths(working_valves, dists, 'AA', time_lim)]
 
     # output
-    logger.debug(f'dists:\n{dists}')
+    # logger.debug(f'dists:\n{dists}')
+    logger.info(f'max release: {max(tunnels, key=lambda t: t[1])}')
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
