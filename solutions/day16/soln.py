@@ -66,43 +66,32 @@ def dijkstra_valves(valves, root, target):
 
     return None
 
-def find_tunnel_path(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30):
+def find_paths(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30):
     """
     Look for all possible paths through the caves within the time limit
     """
-    path = [root]
-    working_valves.remove(root)
+    logger.debug(f'working valves: {working_valves}')
+    path = [(root, 0)]
+    working_valves = set(working_valves)
+    working_valves.discard('AA')
     time_remain = time_lim
     # what valve to open next?
-    queue = [root]
-    while queue:
-        curr = queue.popleft()
-        for cave in working_valves:
-            # check if already opened
-            if cave in path:
-                continue
-            # check for time limit
-            if time_remain - dists[curr][cave] + 1 == time_lim :
-                # +1 to open valve
-                continue
-            # path.append(cave)
-            alt_time_remain = time_remain - dists[curr][cave] - 1
-            yield find_next_cave(path + cave, cave, alt_time_remain, working_valves, dists)
+    yield from find_cave(path, time_remain, working_valves, dists)
 
-def find_next_cave(path: list, curr: str, time_remain: int, working_valves: list, dists: dict, time_lim: int = 30):
+def find_cave(path: list, time_remain: int, working_valves: set, dists: dict):
     """
     Recursively find the next cave, until time limit is met
     """
     for cave in working_valves:
-        if cave in path:
-            continue
-        if time_remain - dists[curr][cave] + 1 == time_lim:
-            continue
+        logger.debug(f'path: {path}')
+        time_req = dists[path[-1][0]][cave] + 1
+        if time_remain <= time_req:
+            # yield if time's up
+            yield path
         else:
-            alt_time_remain = time_remain - dists[curr][cave] - 1
-            path.extend(find_next_cave(path + cave, cave, ))
-    # if none pass threshold, we've reached end of path given time limit
-    return cave
+            new_pool = working_valves.copy()
+            new_pool.discard(cave)
+            yield from find_cave(path + [(cave, time_remain - time_req)], time_remain, new_pool, dists)
 
 
 def main(sample: bool, part_two: bool, loglevel: str):
@@ -114,7 +103,11 @@ def main(sample: bool, part_two: bool, loglevel: str):
         fp = "input.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
-
+    
+    if part_two:
+        time_lim = 26
+    else:
+        time_lim = 30
     # read input
     valves = {v[0]: v[1] for line in read_line(fp) if (v := parse_valve_tunnel(line.strip()))}
     # execute
@@ -130,8 +123,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # given shortest paths between all *working* valves, plus src, find optimal path
     # within the time limit
-    
-    
+    for tunnel in find_paths(working_valves, dists, 'AA', time_lim):
+        logger.debug(f'tunnel: {tunnel}')
 
     # output
     logger.debug(f'dists:\n{dists}')
