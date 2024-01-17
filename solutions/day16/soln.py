@@ -67,20 +67,17 @@ def dijkstra_valves(valves, root, target):
 
     return None
 
-def find_paths(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
+def find_paths(working_valves: set, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
     """
     Look for all possible paths through the caves within the time limit
     """
     # logger.debug(f'working valves: {working_valves}')
     path = [(root, 0)]
-    working_valves = set(working_valves)
-    working_valves.discard(root)
+    if root in working_valves:
+        working_valves.discard(root)
     time_remain = time_lim
     # what valve to open next?
-    if elephant:
-        yield from find_cave_elephant(path: list, time_remain: int, working_valves: set, dists: dict)
-    else:
-        yield from find_cave(path, time_remain, working_valves, dists)
+    yield from find_cave(path, time_remain, working_valves, dists)
 
 def find_cave(path: list, time_remain: int, working_valves: set, dists: dict):
     """
@@ -117,6 +114,14 @@ def find_cave_elephant(paths: list, time_remains: int, working_valves: set, dist
                 pass
 
 
+def calc_pressure(tunnel: list[tuple], valves: dict) -> int:
+    """
+    Given tuple of ('VALVE_ID', time_remain), calculate
+    pressure released
+    """
+    logger.debug(f'tunnel: {tunnel}')
+    pressures = [valves[v[0]].rate * v[1] for v in tunnel]
+    return sum(pressures)
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -137,7 +142,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     # execute
     tstart = time_ns()
     # find shortest paths between all valves
-    working_valves = [name for name, v in valves.items() if v.rate or name == 'AA']
+    working_valves = {name for name, v in valves.items() if v.rate or name == 'AA'}
     dists = defaultdict(dict)
     for root, target in combinations(working_valves, 2):
         shortest = dijkstra_valves(valves, root, target)
@@ -153,12 +158,18 @@ def main(sample: bool, part_two: bool, loglevel: str):
         # tunnel format: [(valve, time_remain), ..., (valve_n, time_remain_0)]
         # look for rate, multiply by time, sum the tuples
         # sums.append(reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel, 0))
-    tunnels = [(tunnel, reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel, 0))
+    human_paths = [(tunnel, calc_pressure(tunnel, valves))
             for tunnel in find_paths(working_valves, dists, 'AA', time_lim)]
+    if part_two:
+        elephant_valve_pools = [working_valves.difference([t[0] for t in path[0]]) for path in human_paths]
+        logger.debug('elephant pools:\n')
+        for pool in elephant_valve_pools:
+            logger.debug(f'{pool}')
+            
 
     # output
     # logger.debug(f'dists:\n{dists}')
-    logger.info(f'max release: {max(tunnels, key=lambda t: t[1])}')
+    logger.info(f'max release: {max(human_paths, key=lambda t: t[1])}')
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
