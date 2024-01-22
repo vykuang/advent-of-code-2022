@@ -102,16 +102,64 @@ def find_cave(path: list, time_remain: int, working_valves: set, dists: dict):
                 # empty pool; all nodes visited
                 yield path + [(cave, alt_time_remain)]
 
-def find_cave_elephant(paths: list, time_remains: int, working_valves: set, dists: dict):
+def find_cave_elephant(paths: list, time_remains: list, working_valves: set, dists: dict):
     """
     Now there's an elephant
+    Two paths, with their own timer
+    Each call adds one valve to path, until timer runs out
+    Recursion ends when both path timer runs out
     """
-    for path, time_remain in zip(paths, time_remains):
-        while working_valves:
+    for cave in working_valves:
+        # try each valve on human path
+        time_req = dists[paths[0][-1][0]][cave] + 1
+        if time_remains[0] <= time_req:
+            # time's up for human path
+            pass
+        else:
+            h_next = (cave, time_remains[0] - time_req)
+            e_pool = working_valves.copy()
+            e_pool.discard(cave)
+            for cave in e_pool:
+                time_req = dists[paths[1][-1][0][cave] + 1
+                    if time_remains[1] <= time_req:
+                    # time's up for elephant
+                        yield paths #???
+                    else:
+                        e_next = (cave, time_remains[1] - time_req)
+                        paths[0].append(h_next)
+                        paths[1].append(e_next)
+                        time_remains[0].append(h_next[1])
+                        time_remains[1].append(e_next[1])
+                        if e_pool:
+                            yield from find_cave_elephant(
+                                paths,
+                                time_remains,
+                                e_pool,
+                                dists)
+                        else:
+                            
+                                
+
+
+
+
+
+
+
+
+
+    while working_valves:
+        for path, time_remain in zip(paths, time_remains):
             cave = working_valves.pop()
             time_req = dists[path[-1][0]][cave] + 1
             if time_remain <= time_req:
-                pass
+                # time's up
+                next
+            else:
+                # append to path 
+                path += (cave, time_remain)
+
+
 
 
 def calc_pressure(tunnel: list[tuple], valves: dict) -> int:

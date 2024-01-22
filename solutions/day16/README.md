@@ -201,3 +201,13 @@ And about what the asynchronous nature of the two agents moving through the tunn
     - at this time, E is already moving toward another valve
 
 I think they have to be separate paths, with their own timer, but the two need to be cognizant of each other's progress to not repeat
+
+If each path picks new valves each turn, they could desync; one could use up too much time compared to the other. Is that a problem? If they both use up the time allotted, I don't see how.
+
+From above:
+
+1. From 2, there are branches for each valve H chooses; within that branch E chooses a corresponding different valve as well
+    - implies a `for each valve` loop when adding valve
+1. 
+
+Programming gets really tricky here. We could reuse part 1, save all the sets (and respective sum), and look for all pairs of *disjointed sets*, so that human and elephant can traverse the two paths, and look for the max.
