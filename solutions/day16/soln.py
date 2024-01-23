@@ -67,14 +67,14 @@ def dijkstra_valves(valves, root, target):
 
     return None
 
-def find_paths(working_valves: list, dists: dict, root: str = 'AA', time_lim: int = 30):
+def find_paths(working_valves: set, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
     """
     Look for all possible paths through the caves within the time limit
     """
     # logger.debug(f'working valves: {working_valves}')
     path = [(root, 0)]
-    working_valves = set(working_valves)
-    working_valves.discard(root)
+    if root in working_valves:
+        working_valves.discard(root)
     time_remain = time_lim
     # what valve to open next?
     yield from find_cave(path, time_remain, working_valves, dists)
@@ -110,6 +110,16 @@ def extract_valves(tunnel: list) -> list:
     return [v[0] for v in tunnel]
 
 
+
+def calc_pressure(tunnel: list[tuple], valves: dict) -> int:
+    """
+    Given tuple of ('VALVE_ID', time_remain), calculate
+    pressure released
+    """
+    logger.debug(f'tunnel: {tunnel}')
+    pressures = [valves[v[0]].rate * v[1] for v in tunnel]
+    return sum(pressures)
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
@@ -129,7 +139,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     # execute
     tstart = time_ns()
     # find shortest paths between all valves
-    working_valves = [name for name, v in valves.items() if v.rate or name == 'AA']
+    working_valves = {name for name, v in valves.items() if v.rate or name == 'AA'}
     dists = defaultdict(dict)
     for root, target in combinations(working_valves, 2):
         shortest = dijkstra_valves(valves, root, target)
