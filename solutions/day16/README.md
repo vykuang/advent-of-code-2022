@@ -211,3 +211,12 @@ From above:
 1. 
 
 Programming gets really tricky here. We could reuse part 1, save all the sets (and respective sum), and look for all pairs of *disjointed sets*, so that human and elephant can traverse the two paths, and look for the max.
+
+### optimization
+
+naive brute-force would have us comparing $50,000^2$ pairs, given 50,000 different paths in the time limit. To trim down the search space:
+
+- sorting
+- compare only paths with a certain threshold of valves opened
+
+see [example](https://github.com/davearussell/advent2022/blob/master/day16/solve.py)

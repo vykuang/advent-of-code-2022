@@ -64,8 +64,6 @@ def dijkstra_valves(valves, root, target):
                 if adj not in visited:
                     dists[min_cost + 1].append(adj)
 
-    return None
-
 def find_paths(working_valves: set, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
     """
     Look for all possible paths through the caves within the time limit
@@ -150,18 +148,19 @@ def main(sample: bool, part_two: bool, loglevel: str):
     # within the time limit
     tunnels = [(extract_valves(tunnel[1:]), reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel[1:], 0))
             for tunnel in find_paths(working_valves, dists, 'AA', time_lim)]
-    # valves = [[v[0] for v in tunnel] for tunnel in tunnels]
     if part_two:
         # look for all disjoint sets
+        logger.info(f'looking for disjoint sets in {len(tunnels)} tunnels')
         pmax = 0
         for (human, ph), (elephant, pe) in combinations(tunnels, 2):
             # logger.debug(f'{ph}: {human}\n{pe}: {elephant}')
             if set(human).isdisjoint(elephant) and ph + pe > pmax:
                 logger.debug(f'new max {pmax}: {human} and {elephant}')
-                pmax = ph + pe
-                hmax = human
-                emax = elephant
-        logger.info(f'highest release: {pmax}\nhuman: {hmax}\nelephant: {emax}')
+                pmax = max(pmax, ph + pe)
+                # hmax = human
+                # emax = elephant
+        logger.info(f'highest so far: {pmax}')
+        # logger.info(f'highest release: {pmax}\nhuman: {hmax}\nelephant: {emax}')
     else:
 
         # output
