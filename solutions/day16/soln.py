@@ -17,7 +17,6 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 class Valve:
     rate: int
     neighbors: list
-    opened: bool = False
     duration: int = 0
 
     def __hash__(self):
