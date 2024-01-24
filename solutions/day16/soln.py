@@ -7,8 +7,7 @@ from time import time_ns
 import re
 from dataclasses import dataclass
 from collections import defaultdict
-from itertools import combinations
-from functools import reduce
+from math import inf
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -40,7 +39,7 @@ def parse_valve_tunnel(line: str) -> list:
     rate = int(re.findall(r'rate=(\d+)', line)[0])
     return name, Valve(rate, neighbors)
 
-def dijkstra_valves(valves, root, target):
+def find_dists(valves, root, target):
     """
     valves: dict
         contains Valve objects, with rate and neighbors attr
@@ -64,6 +63,35 @@ def dijkstra_valves(valves, root, target):
                 if adj not in visited:
                     dists[min_cost + 1].append(adj)
 
+def find_dists_fw(valves):
+    """Floyd-warshall to find shortest paths between all pairs of vertices
+    shortest(i, j, k) = 
+        min(shortest(i, j, k - 1),
+            shortest(i, k, k - 1) + shortest(k, j, k - 1))
+    where i, j are nodes, 0 - k represents all intermediate nodes
+    base:
+    shortest(i, j, 0) = w(i, j), where w is edge weight b/w i, j
+    """
+    # first build adjacency matrix
+    dist = defaultdict(dict)
+    for i in valves:
+        for j in valves:
+            if i == j:
+                dist[i][j] = 0
+            elif j in valves[i].neighbors:
+                dist[i][j] = 1
+            else:
+                # initialize to inf if not direct neighbor
+                dist[i][j] = inf
+
+    # apply f-w algo
+    for k in valves:
+        for i in valves:
+            for j in valves:
+                if dist[i][j] > (new_dist := dist[i][k] + dist[k][j]):
+                    dist[i][j] = new_dist
+    return dist
+            
 
 def find_cave(path: list, node, time_remain, working_valves: set, dists: dict):
     """
@@ -122,38 +150,46 @@ def main(sample: bool, part_two: bool, loglevel: str):
     tstart = time_ns()
     # find shortest paths between all valves
     working_valves = {name for name, v in valves.items() if v.rate or name == 'AA'}
-    dists = defaultdict(dict)
-    for root, target in combinations(working_valves, 2):
-        shortest = dijkstra_valves(valves, root, target)
-        dists[root][target] = shortest
-        # double sided dict
-        dists[target][root] = shortest
+    # dists = defaultdict(dict)
+    # for root, target in combinations(working_valves, 2):
+    #     shortest = find_dists(valves, root, target)
+    #     dists[root][target] = shortest
+    #     # double sided dict
+    #     dists[target][root] = shortest
+
+    dists = find_dists_fw(valves)
+    dists = {i: j for i, j in dists.items() if (valves[i].rate or i == 'AA')}
+    # pprint(dists)
 
     # given shortest paths between all *working* valves, plus src, find optimal path
     # within the time limit
-    # tunnels = [(extract_valves(tunnel[1:]), reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel[1:], 0))
-            # for tunnel in find_cave(working_valves, dists, 'AA', time_lim)]
-        
     tunnels = [(extract_valves(tunnel), calc_pressure(tunnel, valves)) for tunnel in find_cave(
         path=[], node='AA', time_remain=time_lim, 
         working_valves=working_valves - {'AA'},                                              
         dists=dists)]
     logger.info(f'{len(tunnels)} paths found')
     logger.debug(f'first tunnel: {tunnels[0]}')
+    logger.info('sorting paths by released pressure')
+    tunnels = sorted(tunnels, key=lambda t: t[1], reverse=True)
     if part_two:
         # look for all disjoint sets
         pmax = 0
-        for (human, ph), (elephant, pe) in combinations(tunnels, 2):
-            # logger.debug(f'{ph}: {human}\n{pe}: {elephant}')
-            if set(human).isdisjoint(elephant) and ph + pe > pmax:
-                logger.debug(f'new max {pmax}: {human} and {elephant}')
-                pmax = max(pmax, ph + pe)
-                # hmax = human
-                # emax = elephant
-                logger.info(f'highest so far: {pmax}')
-        # logger.info(f'highest release: {pmax}\nhuman: {hmax}\nelephant: {emax}')
-    else:
+        for i, (human, ph) in enumerate(tunnels):
+            if 2 * ph < pmax: 
+                # stop searching once we've reached the lower release paths
+                break
+            for elephant, pe in tunnels[i+1:]:
 
+                if ph + pe > pmax and set(human).isdisjoint(elephant):
+                    pmax = max(pmax, ph + pe)
+                    # hmax = human
+                    # emax = elephant
+                    # logger.debug(f'new max {human} and {elephant}')
+                    logger.info(f'highest so far: {pmax}')
+        # logger.info(f'highest release: {pmax}\nhuman: {hmax}\nelephant: {emax}')
+        logger.info(f'highest release: {pmax}')
+
+    else:
         # output
         # logger.debug(f'dists:\n{dists}')
         logger.info(f'max release: {max(tunnels, key=lambda t: t[1])}')

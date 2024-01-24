@@ -214,15 +214,21 @@ Programming gets really tricky here. We could reuse part 1, save all the sets (a
 
 ### optimization
 
-naive brute-force would have us comparing $50,000^2$ pairs, given 50,000 different paths in the time limit. To trim down the search space:
+naive brute-force would have us comparing $120,000^2$ pairs, given 120,000 different paths in the time limit. To trim down the search space and our runtime from 120,000 sec:
 
-- sorting
-  - sort tunnels by `released` before comparing for disjoint
-- compare only paths with a certain threshold of valves opened?
-  - need to apply heuristics
 - `find_cave` should return only *complete* paths to minimize comparisons
   - check if empty pool or if no other valves can be traversed before base `yield`
   - 87k paths for 30s, from 300k
   - 23k paths for 26s, from 120k
-
+  - 77s, no sorting
+- sorting
+  - sort tunnels by `released` before comparing for disjoint
+  - when do we stop the count???
+  - compare the highest release, with the 2nd highest first
+  - if `2 * release < current_max`, do not consider the rest, break, and return answer
+    - all following paths will have lower releases, and will not exceed current max
+    - 12 sec, with early break
+- bottleneck in dijkstra
+  - running dijkstra for each combination of significant valves: 120 calls
+  - switching to floyd-warshall: 500 ms
 see [example](https://github.com/davearussell/advent2022/blob/master/day16/solve.py)

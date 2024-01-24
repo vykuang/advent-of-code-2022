@@ -7,14 +7,12 @@ readme = "README.md"
 packages = [{include = "advent_of_code"}]
 
 [tool.poetry.dependencies]
-python = "3.10.6"
-numpy = "^1.24.1"
-matplotlib = "^3.6.2"
-scipy = "^1.10.0"
-jupyterlab = "^3.5.2"
+python = "3.11.6"
 
 [tool.poetry.group.dev.dependencies]
-black = "^22.12.0"
+ruff = "*"
+pre-commit = "*"
+ipykernel = "*"
 
 [build-system]
 requires = ["poetry-core"]
