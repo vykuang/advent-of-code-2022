@@ -64,40 +64,27 @@ def dijkstra_valves(valves, root, target):
                 if adj not in visited:
                     dists[min_cost + 1].append(adj)
 
-def find_paths(working_valves: set, dists: dict, root: str = 'AA', time_lim: int = 30, elephant: bool = False):
-    """
-    Look for all possible paths through the caves within the time limit
-    """
-    # logger.debug(f'working valves: {working_valves}')
-    path = [(root, 0)]
-    if root in working_valves:
-        working_valves.discard(root)
-    time_remain = time_lim
-    # what valve to open next?
-    yield from find_cave(path, time_remain, working_valves, dists)
 
-def find_cave(path: list, time_remain: int, working_valves: set, dists: dict):
+def find_cave(path: list, node, time_remain, working_valves: set, dists: dict):
     """
     Recursively find the next cave, until time limit is met
     """
+    if not working_valves or not any([dists[node][cave] + 1 < time_remain for cave in working_valves]):
+        # empty pool; all nodes visited, or time's up
+        # need to occur prior to non-base case to avoid yielding 
+        # intermediate paths
+        logger.debug(f'empty or cannot reach {working_valves}; returning path')
+        yield path
+
     for cave in working_valves:
         # f = input()
-        time_req = dists[path[-1][0]][cave] + 1
-        # logger.debug(f'from {path[-1][0]} checking {cave}; req: {time_req}')
-        if time_remain <= time_req:
-            # yield if time's up
-            # logger.debug(f'times up: {path}')
-            yield path
-        else:
-            alt_time_remain = time_remain - time_req
-            new_pool = working_valves.copy()
-            new_pool.discard(cave)
-            if new_pool:
-                # logger.debug(f'enough time; {alt_time_remain} left\nchoosing from {new_pool}')
-                yield from find_cave(path + [(cave, alt_time_remain)], alt_time_remain, new_pool, dists)
-            else:
-                # empty pool; all nodes visited
-                yield path + [(cave, alt_time_remain)]
+        cost = dists[node][cave] + 1
+        logger.debug(f'{node} -> {cave}; cost: {cost}')
+        if cost < time_remain:
+            logger.debug(f'enough time; {time_remain - cost} left')
+            yield from find_cave(path + [(cave, time_remain - cost)], cave, time_remain - cost, working_valves - {cave}, dists)
+            
+    
 
 def extract_valves(tunnel: list) -> list:
     """
@@ -107,15 +94,13 @@ def extract_valves(tunnel: list) -> list:
     return [v[0] for v in tunnel]
 
 
-
 def calc_pressure(tunnel: list[tuple], valves: dict) -> int:
     """
     Given tuple of ('VALVE_ID', time_remain), calculate
     pressure released
     """
     logger.debug(f'tunnel: {tunnel}')
-    pressures = [valves[v[0]].rate * v[1] for v in tunnel]
-    return sum(pressures)
+    return sum([valves[v[0]].rate * v[1] for v in tunnel])
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -146,11 +131,17 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # given shortest paths between all *working* valves, plus src, find optimal path
     # within the time limit
-    tunnels = [(extract_valves(tunnel[1:]), reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel[1:], 0))
-            for tunnel in find_paths(working_valves, dists, 'AA', time_lim)]
+    # tunnels = [(extract_valves(tunnel[1:]), reduce(lambda x, y: x + valves[y[0]].rate * y[1], tunnel[1:], 0))
+            # for tunnel in find_cave(working_valves, dists, 'AA', time_lim)]
+        
+    tunnels = [(extract_valves(tunnel), calc_pressure(tunnel, valves)) for tunnel in find_cave(
+        path=[], node='AA', time_remain=time_lim, 
+        working_valves=working_valves - {'AA'},                                              
+        dists=dists)]
+    logger.info(f'{len(tunnels)} paths found')
+    logger.debug(f'first tunnel: {tunnels[0]}')
     if part_two:
         # look for all disjoint sets
-        logger.info(f'looking for disjoint sets in {len(tunnels)} tunnels')
         pmax = 0
         for (human, ph), (elephant, pe) in combinations(tunnels, 2):
             # logger.debug(f'{ph}: {human}\n{pe}: {elephant}')
@@ -159,7 +150,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
                 pmax = max(pmax, ph + pe)
                 # hmax = human
                 # emax = elephant
-        logger.info(f'highest so far: {pmax}')
+                logger.info(f'highest so far: {pmax}')
         # logger.info(f'highest release: {pmax}\nhuman: {hmax}\nelephant: {emax}')
     else:
 

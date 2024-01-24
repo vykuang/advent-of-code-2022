@@ -217,6 +217,12 @@ Programming gets really tricky here. We could reuse part 1, save all the sets (a
 naive brute-force would have us comparing $50,000^2$ pairs, given 50,000 different paths in the time limit. To trim down the search space:
 
 - sorting
-- compare only paths with a certain threshold of valves opened
+  - sort tunnels by `released` before comparing for disjoint
+- compare only paths with a certain threshold of valves opened?
+  - need to apply heuristics
+- `find_cave` should return only *complete* paths to minimize comparisons
+  - check if empty pool or if no other valves can be traversed before base `yield`
+  - 87k paths for 30s, from 300k
+  - 23k paths for 26s, from 120k
 
 see [example](https://github.com/davearussell/advent2022/blob/master/day16/solve.py)
