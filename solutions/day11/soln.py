@@ -47,10 +47,6 @@ class Monkey:
         match op:
             case "+":
                 return lambda x: (x + arg) % self.lcm_div
-            #             case '-':
-            #                 return lambda x: int((x - arg) / 3)
-            #             case '/':
-            #                 return lambda x: int(x / arg / 3)
             case "*":
                 return lambda x: (x * arg) % self.lcm_div
 
@@ -133,8 +129,7 @@ if __name__ == "__main__":
                 logger.debug("blank line detected")
     logger.debug(f"monkeys recorded: {len(monkeys)}")
     divisors = [monkeys[label].div_test for label in monkeys]
-    mul = lambda x, y: x * y
-    lcm_div = reduce(mul, divisors)
+    lcm_div = reduce(lambda x, y: x * y, divisors)
     # attach this lcm_div to all monkey instances
     for label in monkeys:
         monkeys[label].lcm_div = lcm_div
@@ -147,5 +142,5 @@ if __name__ == "__main__":
 
     item_counts = sorted([monkeys[label].item_count for label in monkeys], reverse=True)
     lim = 2
-    biz = reduce(mul, item_counts[:lim])
+    biz = reduce(lambda x, y: x * y, item_counts[:lim])
     print(f"monkey biz: {biz}")

@@ -3,7 +3,6 @@
 """
 import sys
 from collections import deque
-import string
 
 
 def load_input(fp: str):

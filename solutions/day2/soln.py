@@ -69,7 +69,7 @@ if __name__ == "__main__":
             rps_scr = rps_dict[line[-1]]
             total_scr = match_scr + rps_scr
             if fn == "test":
-                print(f"part A -----------------------")
+                print("part A -----------------------")
                 print(f"line: {line}\tscore: {match_scr}")
                 print(f"flat score: {rps_scr}")
                 print(f"round total: {total_scr}")
@@ -78,5 +78,5 @@ if __name__ == "__main__":
             scores.append(total_scr)
         print(sum(scores))
         print(f"Part II sum:\n{sum(rps2) + sum(decision2)}")
-    except IndexError as e:
-        print(f"Error: only one arg, {input, test}, accepted")
+    except IndexError:
+        print(f"Error: only one arg, {input}, accepted")

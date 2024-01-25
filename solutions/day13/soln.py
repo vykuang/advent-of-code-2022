@@ -5,7 +5,6 @@ AoC 2022 Day
 
 import sys
 import logging
-from functools import cmp_to_key
 
 logger = logging.getLogger(__name__)
 
