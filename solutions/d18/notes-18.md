@@ -15,3 +15,24 @@ Given a `dataclass`, use `Myclass.__annotations__.keys()` to return list of user
 ## part two - trapped air pockets
 
 the entirety of the structure contains trapped air pockets; those surface areas should not be counted as we're only interested in exterior surface area. How do we find trapped air pockets? These are coordinates that are *absent* from the input list, but are *surrounded* by the cubes in the input list
+
+- Given list of droplet coordinates, search for empty pockets within the bounds
+- Once all coords of empty pockets are known, apply part 1 function to find the empty pockets surface area
+    - assume there are no lava droplets within air pockets
+- subtract air pocket surface area from part 1 answer
+
+### searching for air pockets
+
+```py
+for min(z) to max(z):
+
+    for min(y) to max(y)
+
+        for min(x) to max(x) 
+            if Cube(x, y, z) not in cubes:
+                pockets.append(pocket)
+```
+
+### flood-fill
+
+Starting from some known non-lava coordinate close to the droplet, bounded by the min/max of known droplet coordinates, search for all lava surfaces reachable.
