@@ -24,6 +24,20 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
+def drop_block(pc, jets, stacked):
+    """
+    Drops the block onto the stack accounting for jets
+
+    pc: tuple[complex]
+        set of coords representing the shape
+    jets: int, {-1, 1}
+    stacked: set[complex]
+        collection of stacked blocks coords
+    
+    Returns:
+    None
+    """
+    pass
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -40,40 +54,45 @@ def main(sample: bool, part_two: bool, loglevel: str):
     jets =  next(read_line(fp))
     jets = [jet_dir[jet] for jet in jets.strip()]
     logger.debug(f'jets pattern: {jets}')
-    jets = cycle(jets)
+    logger.info(f'length: {len(jets)}')
+    if part_two:
+        limit = 1000000000000 # 1 tril
+    else:
+        limit = len(jets) * 5
     # execute
     tstart = time_ns()
 
-    limit = 2022
+    jets = cycle(jets)
     stacked = set([i + 0j for i in range(7)])
-    for pcount in range(limit):
-        pc = next(shapes)
-        origin = 2 + max(stacked, key=attrgetter('imag')).imag * 1j + 4j
-        pos_pc = [origin + part for part in pc]
-        bottom = False
-        logger.debug(f'pc: {pc}\nstart pos: {pos_pc}')
-        while not bottom:
-            # apply jets first
-            jet = next(jets)
-            pushed = [jet + part for part in pos_pc]
-            if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
-                pos_pc = pushed
-                logger.debug(f'pushed: {pushed}')
-            # fall down 1 unit
-            fell = [part - 1j for part in pos_pc]
-            if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
-                pos_pc = fell
-                logger.debug(f'fell: {fell}')
-            else:
-                bottom = True
-                stacked.update(pos_pc)
-                logger.debug(f'stopped at {pos_pc}')
+    while (f := input('enter to continue')):
+        for _ in range(limit):
+            pc = next(shapes)
+            origin = 2 + max(stacked, key=attrgetter('imag')).imag * 1j + 4j
+            pos_pc = [origin + part for part in pc]
+            bottom = False
+            logger.debug(f'pc: {pc}\nstart pos: {pos_pc}')
+            while not bottom:
+                # apply jets first
+                jet = next(jets)
+                pushed = [jet + part for part in pos_pc]
+                if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
+                    pos_pc = pushed
+                    logger.debug(f'pushed: {pushed}')
+                # fall down 1 unit
+                fell = [part - 1j for part in pos_pc]
+                if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
+                    pos_pc = fell
+                    logger.debug(f'fell: {fell}')
+                else:
+                    bottom = True
+                    stacked.update(pos_pc)
+                    logger.debug(f'stopped at {pos_pc}')
 
-    height = max(stacked, key=attrgetter('imag')).imag
+        height = max(stacked, key=attrgetter('imag')).imag
 
 
-    # output
-    logger.info(f'height: {height}')
+        # output
+        logger.info(f'height: {height}')
 
 
     tstop = time_ns()
