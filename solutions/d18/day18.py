@@ -4,9 +4,9 @@ import argparse
 import logging
 import sys
 from time import time_ns
-from itertools import combinations
 from dataclasses import dataclass
 from operator import attrgetter
+from collections import deque
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -36,7 +36,21 @@ class Cube:
             return True
         else:
             return False
-
+        
+    def sides(self) -> list:
+        east = Cube(self.x + 1, self.y, self.z)
+        west = Cube(self.x - 1, self.y, self.z)
+        north = Cube(self.x, self.y+1, self.z)
+        south = Cube(self.x, self.y-1, self.z)
+        out = Cube(self.x, self.y, self.z+1)
+        into = Cube(self.x, self.y, self.z-1)
+        return {east, west, north, south, out, into}
+    
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
+    
+    def __repr__(self) -> str:
+        return f'Cube({self.x}, {self.y}, {self.z})'
 
 def read_line(fpath: str):
     """Reads the input and yields each line"""
@@ -55,45 +69,65 @@ def find_min_max(cubes, comp):
     cmax = getattr(csort[-1], comp)
     return cmin, cmax
 
+def is_in_boundary(cube, zmin, zmax, ymin, ymax, xmin, xmax):
+    return zmin -1 <= cube.z <= zmax + 1 and ymin - 1 <= cube.y <= ymax + 1 and xmin - 1 <= cube.x <= xmax + 1
+
+def flood_fill(cubes: set):
+    """
+    Use flood fill to find external surface area of this set of cubes
+    """
+    zmin, zmax = find_min_max(cubes, 'z')
+    ymin, ymax = find_min_max(cubes, 'y')
+    xmin, xmax = find_min_max(cubes, 'x')
+    src = Cube(xmin-1, ymin-1, zmin-1)
+    logger.debug(f'starting from {src}\tboundary @ {xmax}, {ymax}, {zmax}')
+
+    todo = deque([src])
+    visited = set()
+    ext_sa = 0
+    while todo:
+        cube = todo.popleft()
+        # check if part of droplet
+        if cube in visited:
+            continue
+        if cube in cubes:
+            ext_sa += 1
+            logger.debug(f'surface reached @ {cube}\tcurrent sa: {ext_sa}')
+            continue
+        # check if cube is inside bounds, but not part of droplet
+        elif is_in_boundary(cube, zmin, zmax, ymin, ymax, xmin, xmax):
+            # add other 6 dirs to queue
+            for side in cube.sides():
+                if side not in visited and is_in_boundary(side, zmin, zmax, ymin, ymax, xmin, xmax):
+                    todo.append(side)
+            visited.add(cube)
+        else:
+            continue
+    return ext_sa
+
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
     if not sample:
         fp = "input.txt"
     else:
-        fp = "sample2.txt"
+        fp = "sample.txt"
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
-    cubes = [Cube(*(map(int, line.split(',')))) for line in read_line(fp)]
+    cubes = {Cube(*(map(int, line.split(',')))) for line in read_line(fp)}
     logger.debug(f'cubes:\n{cubes}')
 
     # execute
     tstart = time_ns()
-    # check for adjacencies between each pair
-    adj = [c1.check_adjacent(c2) for c1, c2 in combinations(cubes, 2)]
-    sa = len(cubes) * 6 - 2 * sum(adj)
     if part_two:
-        # zsort = sorted(cubes, key=getattr('z'))
-        # zmin = zsort[0].z
-        # zmax = zsort[-1].z
-        pockets = []
-        zmin, zmax = find_min_max(cubes, 'z')
-        for z in range(zmin + 1, zmax):
-            ymin, ymax = find_min_max(cubes, 'y')
-            for y in range(ymin + 1, ymax):
-                xmin, xmax = find_min_max(cubes, 'x')
-                for x in range(xmin + 1, xmax):
-                    # look for air pockets
-                    if (pocket := Cube(x, y, z)) not in cubes:
-                        logger.debug(f'pocket: {pocket}')
-                        pockets.append(pocket)
-        pockets_adj = [p1.check_adjacent(p2) for p1, p2 in combinations(pockets, 2)]
-        psa = 6 * len(pockets) - 2 * sum(pockets_adj)
-        logger.info(f'droplet total sa: {sa}\npockets sa: {psa}')
-        sa -= psa
-
+        # exterior flood fill
+        sa = flood_fill(cubes)
+    else:
+        # count sides exposed to air
+        sa = sum([len(cube.sides() - cubes) for cube in cubes])
     # output
     logger.info(f'surface area: {sa}')
     tstop = time_ns()
