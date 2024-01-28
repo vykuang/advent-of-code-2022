@@ -24,7 +24,7 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
-def drop_block(pc, jets, stacked):
+def drop_block(shapes, jets, stacked, peak=0) -> int:
     """
     Drops the block onto the stack accounting for jets
 
@@ -35,9 +35,35 @@ def drop_block(pc, jets, stacked):
         collection of stacked blocks coords
     
     Returns:
-    None
+    peak: int
+
     """
-    pass
+    f = input()
+    drops = 0
+    pc = next(shapes)
+    origin = 2 + peak * 1j + 4j
+    pos_pc = [origin + part for part in pc]
+    peak_pc = max(pos.imag for pos in pos_pc)
+    logger.debug(f'pc: {pc}\tpos: {pos_pc}\tpeak: {peak_pc}')
+    while True:
+        # drop block until intersection with stacked
+        jet = next(jets)
+        pushed = [jet + part for part in pos_pc]
+        if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
+            pos_pc = pushed
+            logger.debug('pushed')
+        # fall down 1 unit
+        fell = [part - 1j for part in pos_pc]
+        if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
+            pos_pc = fell
+            drops += 1
+            logger.debug('fell')
+        else:
+            stacked.update(pos_pc)
+            logger.debug('stopped')
+            break
+    logger.debug(f'new peak: {peak_pc} - {drops}')
+    return peak_pc - drops 
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -53,46 +79,23 @@ def main(sample: bool, part_two: bool, loglevel: str):
     shapes = cycle([bar, cross, ell, eye, square])
     jets =  next(read_line(fp))
     jets = [jet_dir[jet] for jet in jets.strip()]
-    logger.debug(f'jets pattern: {jets}')
     logger.info(f'length: {len(jets)}')
     if part_two:
         limit = 1000000000000 # 1 tril
     else:
-        limit = len(jets) * 5
+        # limit = len(jets) * 5
+        limit = 2022
     # execute
     tstart = time_ns()
-
     jets = cycle(jets)
     stacked = set([i + 0j for i in range(7)])
-    while (f := input('enter to continue')):
-        for _ in range(limit):
-            pc = next(shapes)
-            origin = 2 + max(stacked, key=attrgetter('imag')).imag * 1j + 4j
-            pos_pc = [origin + part for part in pc]
-            bottom = False
-            logger.debug(f'pc: {pc}\nstart pos: {pos_pc}')
-            while not bottom:
-                # apply jets first
-                jet = next(jets)
-                pushed = [jet + part for part in pos_pc]
-                if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
-                    pos_pc = pushed
-                    logger.debug(f'pushed: {pushed}')
-                # fall down 1 unit
-                fell = [part - 1j for part in pos_pc]
-                if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
-                    pos_pc = fell
-                    logger.debug(f'fell: {fell}')
-                else:
-                    bottom = True
-                    stacked.update(pos_pc)
-                    logger.debug(f'stopped at {pos_pc}')
-
-        height = max(stacked, key=attrgetter('imag')).imag
-
-
+    peak = 0
+    for _ in range(limit):
+            # logger.debug(f'pc: {pc}\nstart pos: {pos_pc}')
+        peak += drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
         # output
-        logger.info(f'height: {height}')
+        logger.debug(f'current: {peak}')
+    logger.info(f'height: {peak}')
 
 
     tstop = time_ns()
