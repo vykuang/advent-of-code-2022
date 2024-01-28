@@ -16,7 +16,6 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 class Valve:
     rate: int
     neighbors: list
-    duration: int = 0
 
     def __hash__(self):
         return hash((self.rate, self.neighbors))
@@ -130,7 +129,7 @@ def calc_pressure(tunnel: list[tuple], valves: dict) -> int:
     logger.debug(f'tunnel: {tunnel}')
     return sum([valves[v[0]].rate * v[1] for v in tunnel])
 
-def main(sample: bool, part_two: bool, loglevel: str):
+def main(sample: bool, part_two: bool, loglevel: str, root=root):
     """ """
     logger.setLevel(loglevel)
     if sample:
@@ -149,7 +148,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
     # execute
     tstart = time_ns()
     # find shortest paths between all valves
-    working_valves = {name for name, v in valves.items() if v.rate or name == 'AA'}
+    working_valves = {name for name, v in valves.items() if v.rate or name == root}
+
+    # /--------------------dijkstra for each combination ---------------------/
     # dists = defaultdict(dict)
     # for root, target in combinations(working_valves, 2):
     #     shortest = find_dists(valves, root, target)
@@ -157,15 +158,15 @@ def main(sample: bool, part_two: bool, loglevel: str):
     #     # double sided dict
     #     dists[target][root] = shortest
 
+    # floyd-warshall; better for dense graphs (each node accessible by all)
     dists = find_dists_fw(valves)
-    dists = {i: j for i, j in dists.items() if (valves[i].rate or i == 'AA')}
-    # pprint(dists)
+    dists = {i: j for i, j in dists.items() if (valves[i].rate or i == root)}
 
     # given shortest paths between all *working* valves, plus src, find optimal path
     # within the time limit
     tunnels = [(extract_valves(tunnel), calc_pressure(tunnel, valves)) for tunnel in find_cave(
-        path=[], node='AA', time_remain=time_lim, 
-        working_valves=working_valves - {'AA'},                                              
+        path=[], node=root, time_remain=time_lim, 
+        working_valves=working_valves - {root},                                              
         dists=dists)]
     logger.info(f'{len(tunnels)} paths found')
     logger.debug(f'first tunnel: {tunnels[0]}')
