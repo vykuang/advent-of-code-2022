@@ -38,4 +38,24 @@ Since our height is monotonically increasing, the cycle is in how much the heigh
 
 ### Implementation
 
-Need to speed up my `f()` calls for this to work
+- Need to speed up my `f()` calls for this to work
+- Reduce `stack` to only exposed parts?
+    - update `exposed_stack` after each drop_stack
+    - makes `.isdisjoint()` faster with fewer items in the set
+- hashable:
+    - jet index
+    - shape index
+    - top profile (?)
+    - height increased
+- once $\mu$ and $\lambda$ are found:
+    - get `ncycles`
+    - get `remainder`
+    - get `height_inc_per_cycle`
+        - perhaps run through the cycle again
+    - *replay* the remaining unfinished cycle by looking at past increases inside the cycle
+    - `ht_remainder = sum(ht_incs[mu:remainder])`
+    - 1514285714288
+    -  857142857126
+
+
+

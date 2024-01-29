@@ -6,9 +6,12 @@ import sys
 from time import time_ns
 from itertools import cycle
 from operator import attrgetter
+from collections import namedtuple
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+
+State = namedtuple('State', 'height_inc, pc_idx, jet_idx')
 
 bar = [i + 0j for i in range(4)]
 cross = [1j, 2+1j, 1+0j, 1+2j]
@@ -28,7 +31,7 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
     """
     Drops the block onto the stack accounting for jets
 
-    pc: tuple[complex]
+    shapes: tuple[complex]
         set of coords representing the shape
     jets: int, {-1, 1}
     stacked: set[complex]
@@ -39,19 +42,20 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
 
     """
     # f = input()
-    pc = next(shapes)
+    pc_idx, pc = next(shapes)
     origin = 2 + peak * 1j + 4j
     pos_pc = [origin + part for part in pc]
     peak_pc = max(pos.imag for pos in pos_pc)
     logger.debug(f'pc: {pc}\tpos: {pos_pc}\tpeak: {peak_pc}')
     while True:
         # drop block until intersection with stacked
-        jet = next(jets)
+        jet_idx, jet = next(jets)
         pushed = [jet + part for part in pos_pc]
         if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
+            # collision and bounds check
             pos_pc = pushed
-            push_msg = 'left' if jet == -1 else 'right'
-            logger.debug(push_msg)
+            # push_msg = 'left' if jet == -1 else 'right'
+            # logger.debug(push_msg)
         # fall down 1 unit
         fell = [part - 1j for part in pos_pc]
         if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
@@ -62,7 +66,10 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
             stacked.update(pos_pc)
             logger.debug('stopped')
             break
-    return peak_pc 
+    height_inc = peak_pc - peak if peak_pc > 0 else 0
+    peak = max(peak, peak_pc)
+    return peak, State(height_inc, pc_idx, jet_idx)
+
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -75,26 +82,53 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
-    shapes = cycle([bar, cross, ell, eye, square])
+    # enumerate creates index
+    shapes = cycle(enumerate([bar, cross, ell, eye, square]))
+    # only 1 line of jets
     jets =  next(read_line(fp))
     jets = [jet_dir[jet] for jet in jets.strip()]
     logger.info(f'length: {len(jets)}')
     if part_two:
-        # limit = 1000000000000 # 1 tril
-        limit = 5 * len(jets) # len is a prime 
+        limit = 1000000000000 # 1 tril
+        # limit = 5 * len(jets) # len is a prime 
     else:
         # limit = len(jets) * 5
         limit = 2022
     # execute
     tstart = time_ns()
-    jets = cycle(jets)
+    jets = cycle(enumerate(jets))
+    # initialize the floor
     stacked = set([i + 0j for i in range(7)])
     peak = 0
-    for _ in range(limit):
-        # returned peak_pos may not be higher than existing
-        peak = max(peak, drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak))
-        # output
-        logger.debug(f'current: {peak}')
+    ndrops = 0
+    height_incs = []
+    states = {}
+    if part_two:
+        # state = [height_inc, shape_idx, jet_idx]
+        while True:
+            peak, state = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
+            ndrops += 1
+            if state in states:
+                logger.info(f'repeat found at @ {ndrops}th drop')
+                # start recording height_inc for replay
+                break
+            height_incs.append(state.height_inc)
+            states[state] = ndrops
+        mu = states[state]
+        lam = ndrops - mu
+        height_inc_per_cycle = sum(height_incs[mu:])
+        logger.info(f'state: {state}\tfirst: {mu}\tlam: {lam}')
+        ncycles = (limit - mu) // lam
+        remainder = (limit - mu) - lam * ncycles
+        height_remainder = sum(height_incs[mu:remainder])
+        peak = height_incs[mu] + ncycles * height_inc_per_cycle + height_remainder
+
+    else:
+        for _ in range(limit):
+            # returned peak_pos may not be higher than existing
+            peak, _, _, _ = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
+            # output
+            logger.debug(f'current: {peak}')
     logger.info(f'height: {peak}')
 
 
