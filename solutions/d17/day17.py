@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 bar = [i + 0j for i in range(4)]
-cross = [1j, 1+1j, 2+1j, 1+0j, 1+2j]
+cross = [1j, 2+1j, 1+0j, 1+2j]
 ell = [0j, 1, 2, 2+1j, 2+2j]
 eye = [i*1j for i in range(4)]
 square = [0j, 1, 1j, 1+1j]
@@ -38,8 +38,7 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
     peak: int
 
     """
-    f = input()
-    drops = 0
+    # f = input()
     pc = next(shapes)
     origin = 2 + peak * 1j + 4j
     pos_pc = [origin + part for part in pc]
@@ -51,19 +50,19 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
         pushed = [jet + part for part in pos_pc]
         if stacked.isdisjoint(pushed) and min(pushed, key=attrgetter('real')).real >= 0 and max(pushed, key=attrgetter('real')).real < 7:
             pos_pc = pushed
-            logger.debug('pushed')
+            push_msg = 'left' if jet == -1 else 'right'
+            logger.debug(push_msg)
         # fall down 1 unit
         fell = [part - 1j for part in pos_pc]
         if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
             pos_pc = fell
-            drops += 1
+            peak_pc -= 1
             logger.debug('fell')
         else:
             stacked.update(pos_pc)
             logger.debug('stopped')
             break
-    logger.debug(f'new peak: {peak_pc} - {drops}')
-    return peak_pc - drops 
+    return peak_pc 
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -81,7 +80,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
     jets = [jet_dir[jet] for jet in jets.strip()]
     logger.info(f'length: {len(jets)}')
     if part_two:
-        limit = 1000000000000 # 1 tril
+        # limit = 1000000000000 # 1 tril
+        limit = 5 * len(jets) # len is a prime 
     else:
         # limit = len(jets) * 5
         limit = 2022
@@ -91,8 +91,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
     stacked = set([i + 0j for i in range(7)])
     peak = 0
     for _ in range(limit):
-            # logger.debug(f'pc: {pc}\nstart pos: {pos_pc}')
-        peak += drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
+        # returned peak_pos may not be higher than existing
+        peak = max(peak, drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak))
         # output
         logger.debug(f'current: {peak}')
     logger.info(f'height: {peak}')
