@@ -6,12 +6,12 @@ import sys
 from time import time_ns
 from itertools import cycle
 from operator import attrgetter
-from collections import namedtuple
+from collections import namedtuple, deque
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-State = namedtuple('State', 'height_inc, pc_idx, jet_idx')
+State = namedtuple('State', 'height_inc, pc_idx, jet_idx, tops')
 
 bar = [i + 0j for i in range(4)]
 cross = [1j, 2+1j, 1+0j, 1+2j]
@@ -46,7 +46,7 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
     origin = 2 + peak * 1j + 4j
     pos_pc = [origin + part for part in pc]
     peak_pc = max(pos.imag for pos in pos_pc)
-    logger.debug(f'pc: {pc}\tpos: {pos_pc}\tpeak: {peak_pc}')
+    logger.debug(f'pc: {pc}\tpos: {pos_pc}\tdrop point: {peak_pc}')
     while True:
         # drop block until intersection with stacked
         jet_idx, jet = next(jets)
@@ -56,7 +56,6 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
             pos_pc = pushed
             # push_msg = 'left' if jet == -1 else 'right'
             # logger.debug(push_msg)
-        # fall down 1 unit
         fell = [part - 1j for part in pos_pc]
         if stacked.isdisjoint(fell) and min(fell, key=attrgetter('imag')).imag >= 0:
             pos_pc = fell
@@ -64,12 +63,47 @@ def drop_block(shapes, jets, stacked, peak=0) -> int:
             logger.debug('fell')
         else:
             stacked.update(pos_pc)
+            # retrieve top profile for hashing
             logger.debug('stopped')
             break
-    height_inc = peak_pc - peak if peak_pc > 0 else 0
+    height_inc = peak_pc - peak if peak_pc > peak else 0
     peak = max(peak, peak_pc)
-    return peak, State(height_inc, pc_idx, jet_idx)
+    logger.debug(f'new peak: {peak}')
+    stacked = find_top_profile(stacked, peak)
+    tops = tuple([complex(part.real, peak - part.imag) for part in tuple(stacked)])
+    # logger.debug(f'tops: {tops}')
+    # logger.debug(f'stack: {stacked}')
+    return peak, stacked, State(height_inc, pc_idx, jet_idx, tops)
 
+
+def find_top_profile(stacked: set, peak: int):
+    """
+    Use flood fill to find the top profile of stack
+    """
+    new_stack = set()
+    visited = set()
+    # start from one row above top, from the middle
+    src = 3 + (peak + 1) * 1j
+    todo = deque([src])
+    while todo:
+        node = todo.popleft()
+        for direc in [-1,1,1j,-1j]:
+            child = node + direc
+            if child in stacked:
+                new_stack.add(child)
+            elif child not in visited and 0 <= child.real < 7 and child.imag <= peak + 1:
+                todo.append(child)
+            else:
+                continue
+        visited.add(node)
+    return new_stack
+
+def draw_stack(peak: int, stacked: set):
+    lines = []
+    for row in range(peak, 0, -1):
+        line = ''.join(['#' if node in stacked else '.' for node in [col + row * 1j for col in range(7)]])
+        lines.append(line)
+    return lines
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -92,7 +126,6 @@ def main(sample: bool, part_two: bool, loglevel: str):
         limit = 1000000000000 # 1 tril
         # limit = 5 * len(jets) # len is a prime 
     else:
-        # limit = len(jets) * 5
         limit = 2022
     # execute
     tstart = time_ns()
@@ -106,11 +139,13 @@ def main(sample: bool, part_two: bool, loglevel: str):
     if part_two:
         # state = [height_inc, shape_idx, jet_idx]
         while True:
-            peak, state = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
+            peak, stacked, state = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
             ndrops += 1
             if state in states:
-                logger.info(f'repeat found at @ {ndrops}th drop')
+                logger.info(f'repeat found @ {ndrops}th drop')
                 # start recording height_inc for replay
+                break
+            if ndrops > 52:
                 break
             height_incs.append(state.height_inc)
             states[state] = ndrops
@@ -118,17 +153,21 @@ def main(sample: bool, part_two: bool, loglevel: str):
         lam = ndrops - mu
         height_inc_per_cycle = sum(height_incs[mu:])
         logger.info(f'state: {state}\tfirst: {mu}\tlam: {lam}')
+        h_precycle = sum(height_incs[:mu])
         ncycles = (limit - mu) // lam
         remainder = (limit - mu) - lam * ncycles
         height_remainder = sum(height_incs[mu:remainder])
-        peak = height_incs[mu] + ncycles * height_inc_per_cycle + height_remainder
+        logger.info(f'precycle: {h_precycle}\nncycles: {ncycles}\nh per c: {height_inc_per_cycle}\nh remainder: {height_remainder}')
+        peak = h_precycle + ncycles * height_inc_per_cycle + height_remainder
 
     else:
         for _ in range(limit):
-            # returned peak_pos may not be higher than existing
-            peak, _, _, _ = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
+            #f = input()
+            peak, stacked, _ = drop_block(jets=jets, shapes=shapes, stacked=stacked, peak=peak)
             # output
             logger.debug(f'current: {peak}')
+            # for line in draw_stack(int(peak), stacked):
+                # print(line)
     logger.info(f'height: {peak}')
 
 
