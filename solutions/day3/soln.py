@@ -64,28 +64,25 @@ if __name__ == "__main__":
     group_lim = 3
     group = []
     badge_list = []
-    try:
-        fn = sys.argv[1]
-        fp = f"{fn}.txt"
-        for line in load_input(fp):
-            # part A - check common item between compartments in a rucksack
-            comp_a, comp_b = parse_rucksack(line)
-            # print(f"A: {comp_a}\tB:{comp_b}")
-            shared = check_item(comp_a, comp_b)
-            if shared:
-                shared = shared.pop()
-                # print(f"shared:\t{shared}\tpriority:\t{priority[shared]}")
-                priority_sums.append(priority[shared])
+    fn = sys.argv[1]
+    fp = f"{fn}.txt"
+    for line in load_input(fp):
+        # part A - check common item between compartments in a rucksack
+        comp_a, comp_b = parse_rucksack(line)
+        # print(f"A: {comp_a}\tB:{comp_b}")
+        shared = check_item(comp_a, comp_b)
+        if shared:
+            shared = shared.pop()
+            # print(f"shared:\t{shared}\tpriority:\t{priority[shared]}")
+            priority_sums.append(priority[shared])
 
-            # part B - check common item between every three rucksacks
-            group.append(line)
-            if len(group) >= group_lim:
-                group_badge = check_badge(group).pop()
-                group_badge_priority = priority[group_badge]
-                badge_list.append(group_badge_priority)
-                group.clear()
+        # part B - check common item between every three rucksacks
+        group.append(line)
+        if len(group) >= group_lim:
+            group_badge = check_badge(group).pop()
+            group_badge_priority = priority[group_badge]
+            badge_list.append(group_badge_priority)
+            group.clear()
 
-    except:
-        raise Exception
     print(f"Part A: priority sums: {sum(priority_sums)}")
     print(f"Part B: badge sums: {sum(badge_list)}")

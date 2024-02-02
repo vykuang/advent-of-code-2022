@@ -111,6 +111,7 @@ if __name__ == "__main__":
     rope = [head for _ in range(LEN_ROPE)]
     # init collections of knot positions as list of sets
     rope_hists = [[head] for _ in range(LEN_ROPE)]
+    prev_path = []
     for line in load_input(fp):
         logger.debug("====================")
         logger.debug(f"line: {line}")
@@ -124,8 +125,8 @@ if __name__ == "__main__":
             # tail = path[-1]
             # tail_hist.extend(path)
             rope[i] = path[-1]
-            rope_hists[i].extend(path)
             prev_path = path
+            rope_hists[i].extend(path)
             logger.debug(f"path: {path}")
             logger.debug(f"knot {i} now @ {rope[i]}")
             logger.debug("----------------------")

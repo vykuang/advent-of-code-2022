@@ -49,7 +49,7 @@ if __name__ == "__main__":
     sigs = []
     row = ""
     for line in load_input(fp):
-        logger.info(f"============")
+        logger.info("============")
         logger.info(f"executing {line}")
         # drawing occurs before the line instruction complete
         row += draw_pixel(cycle, val)

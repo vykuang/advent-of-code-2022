@@ -2,11 +2,10 @@
 """
 AoC 2022 Day
 """
-import time
 import sys
 import logging
-from string import ascii_lowercase
-from collections import defaultdict, deque
+from collections import defaultdict
+from math import inf
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ def path_find(root_pos: complex, grid: dict):
     # 2. create a dict of {coord: dist}, and initialize all dist to some
     # arbitrary large value
     # also acts as set of visited nodes
-    visited = defaultdict(lambda: 1000000)
+    visited = defaultdict(lambda: inf)
     visited[root_pos] = 0
     current = root_pos
     # 4. remove current from unvisited set
@@ -45,7 +44,7 @@ def path_find(root_pos: complex, grid: dict):
     while unvisited:
         # 6. set as current the unvisited node marked with smallest tentative dist
         current = sorted(unvisited, key=lambda k: visited[k])[0]
-        letter = unvisited.pop(current)
+        unvisited.pop(current)
         #        if letter == "S": # for part one
         #            break
         logger.debug("------------------")

@@ -29,7 +29,7 @@ def make_rock(rock_line: list) -> np.array:
 
     Returns a bool array
     """
-    logger.debug(f"new rock_line:")
+    logger.debug("new rock_line:")
     edges = [tuple(rock_line[-1])]
     for i in range(len(rock_line) - 1):
         x, y = rock_line[i]
@@ -43,11 +43,13 @@ def make_rock(rock_line: list) -> np.array:
         #             x_fill = np.full(len(y_fill), x)
         else:
             fill = [(x, dy) for dy in range(y, ny, delta_sign(y, ny))]
-        logger.debug(f"rock segment: ")
+        logger.debug("rock segment: ")
         logger.debug(fill)
         edges.extend(fill)
     return edges
 
+def convert_xy(xy_str):
+    return list(int(xy) for xy in xy_str.split(","))
 
 if __name__ == "__main__":
     fn = sys.argv[1]
@@ -65,7 +67,6 @@ if __name__ == "__main__":
         logger.addHandler(ch)
     else:
         logger.setLevel(logging.INFO)
-    convert_xy = lambda xy_str: list(int(xy) for xy in xy_str.split(","))
     rocks = [
         [convert_xy(xy) for xy in line.split() if "," in xy] for line in load_input(fp)
     ]
