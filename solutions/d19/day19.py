@@ -55,7 +55,7 @@ def parse_blueprint(line: str):
     blueprint = {p[0]: p[1] for req in reqs.split('.') if (p := parse_req(req.strip()))}
     return bid, blueprint
 
-def find_geodes(bp: dict, timelim: int = 24) -> int:
+def not_find_geodes(bp: dict, timelim: int = 24) -> int:
     """
     Find geodes given blueprint
     """
@@ -90,6 +90,35 @@ def find_geodes(bp: dict, timelim: int = 24) -> int:
 
         f = input()
     return nmats['geo']
+
+def find_geodes(nmats, rates, t_remain, blueprint):
+    """
+    Given nmat, rates, t_remain, use tree search
+    to maximize nmats['geo']
+    """
+    logger.debug(f'time: {t_remain}')
+    if t_remain == 1:
+        return nmats['geo'] + rates['geo']
+    # check resources
+    build = {}
+    mats = ['geo', 'obs', 'cla', 'ore']
+    for mat in mats:
+        # enable build, but do not build yet
+        if all(nmats[req] >= blueprint[mat] for req in blueprint[robot]):
+            build[robot] = True
+        # collect ores after enabling build
+        nmats[mat] += rates[mat]
+
+    t_remain -= 1
+    for robot in build:
+        if build[robot]:
+            # spend resources
+            spent = {mat: nmat[mat] - blueprint[robot][req] for req in blueprint[robot]}
+            new_rates = rates.copy()
+            new_rates[robot] += 1
+            yield from find_geodes(spent, new_rates, t_remain, blueprint)
+
+
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
