@@ -21,4 +21,9 @@ At each junction where we have enough resource for a robot, we either consume th
 ### heuristics
 
 - at time `t`, if there was enough resources to build a robot, and it was not built, it will always be worse to build it at `t+1`
-- if resources at the end of time `t` is more than `sum((t - 1) * max(mats[req]))`,
+    - record what robot was enabled but not built at `t-1`
+    - is it true that in all optimal paths, once we choose not to build a robot of a certain type, that type should never be built for the remainder?
+        - not true; example alternates building of clay and obs robots
+- if resources at the end of time `t` is more than `(t - 1) * max(mats[req])`, stop building robots for `req`
+    - set to `inf`
+    - if `nmats[mat] == inf`, do not build
