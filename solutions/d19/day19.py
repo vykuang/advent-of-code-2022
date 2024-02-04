@@ -114,7 +114,7 @@ def max_mat_req(t_remain: int, mat: str, blueprint: Hashabledict) -> int:
         return t_remain * max(reqs)
 
 
-def find_geodes(nmats, rates, t_remain, blueprint, skipped=[]):
+def find_geodes(nmats, rates, t_remain, blueprint, skipped, ngeos):
     """
     Given nmat, rates, t_remain, use tree search
     to maximize nmats['geo']
@@ -125,14 +125,15 @@ def find_geodes(nmats, rates, t_remain, blueprint, skipped=[]):
     """
     logger.debug(f'======== minute {t_remain} ========\nmats: {nmats}\nrates: {rates}')
     if t_remain == 1:
-        ngeos = nmats['geo'] + rates['geo']
+        ngeo = nmats['geo'] + rates['geo']
         # lets python know this is the global scope var, before it looks
         # for a local `paths`
         global paths
         paths += 1
-        if ngeos > 0:
-            logger.debug(f"times up, collected {ngeos} geodes")
-        return ngeos
+        if ngeo > 0:
+            logger.debug(f"times up, collected {ngeo} geodes")
+            ngeos.append(ngeo)
+        return 
     # check resources
     build = {}
     for robot in nmats:
@@ -162,10 +163,10 @@ def find_geodes(nmats, rates, t_remain, blueprint, skipped=[]):
             logger.debug(f'after building {robot} robot:\nmats: {new_mats}\nrates: {new_rates}')
             # next minute will not build all other robots
             skipped = [b for b in build if b != robot]
-            yield from find_geodes(new_mats, new_rates, t_remain, blueprint, skipped)
+            find_geodes(new_mats, new_rates, t_remain, blueprint, skipped, ngeos)
 
-    # paths that do not build
-    yield from find_geodes(nmats, rates, t_remain, blueprint)
+    # paths that do not build any
+    find_geodes(nmats, rates, t_remain, blueprint, [], ngeos)
 
 
 def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
@@ -192,14 +193,12 @@ def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     rates = dict(zip(mats, [0,0,0,1]))
     # qlevels = [find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp) for bp in blueprints.values()]
     for bp in blueprints.values():
-        qs = find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp)
-        for q in qs:
-            # logger.info(f'max for bp: {max(q)}') 
-            logger.info(f'paths: {paths}')
-            paths = 0
-            logger.info(f'q: {q}')           
+        ngeos = []
+        find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp, skipped=[], ngeos=ngeos)
+        logger.info(f'most geodes: {max(ngeos)}')
+        logger.info(f'{paths} paths found')
+        paths = 0
     # output
-    logger.info(f'{paths} paths found')
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 

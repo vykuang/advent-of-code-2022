@@ -18,6 +18,8 @@ At each junction where we have enough resource for a robot, we either consume th
     1. increase `rates` by `built`
     1. recurse with new states `nmats`, `rates`, and `time - 1`
 
+Pass the `ngeos` list to each recursive call so that when it gets to `t=1`, append the `ngeo` count. Structure our recursive call so that it doesn't return anything, but it modifies the `ngeos` list that was passed to it
+
 ### heuristics
 
 - at time `t`, if there was enough resources to build a robot, and it was not built, it will always be worse to build it at `t+1`
@@ -27,3 +29,11 @@ At each junction where we have enough resource for a robot, we either consume th
 - if resources at the end of time `t` is more than `(t - 1) * max(mats[req])`, stop building robots for `req`
     - set to `inf`
     - if `nmats[mat] == inf`, do not build
+- keep track of current `max(ngeos)`
+    - prune branches if it's impossible for it to exceed the current max
+    - upper bound: building 1 geode robot every minute for all remaining time
+    - e.g. at t_remain = 5, current geode count = 2, and current rate = 1, if we build 1 robot from now (t=5) to t=2, `ngeo = 2 + 1 + 2 + 3 + 4 + 5 = n_curr + r_curr + r_curr + 1 + ... + r_curr + t_remain - 1 = 13`
+    - might be too high, and therefore ineffective
+    - take into account blueprint? No that's just running the simulation
+- iterate with intent of building a specific type of robot, instead of randomly choosing
+
