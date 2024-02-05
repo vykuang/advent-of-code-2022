@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 paths = 0
+max_ngeo = 0
 
 class Hashabledict(dict):
     def __hash__(self) -> int:
@@ -113,8 +114,14 @@ def max_mat_req(t_remain: int, mat: str, blueprint: Hashabledict) -> int:
     if reqs:
         return t_remain * max(reqs)
 
+def ngeo_upperbound(t_remain, n_geo, r_geo) -> int:
+    """
+    Calculate upper bound of how many geodes this branch can obtain
+    by optimistically building a geode robot for each useable minute
+    """
+    return n_geo + t_remain/2*(2*r_geo+t_remain-1)
 
-def find_geodes(nmats, rates, t_remain, blueprint, skipped, ngeos):
+def find_geodes(nmats, rates, t_remain, blueprint, skipped):
     """
     Given nmat, rates, t_remain, use tree search
     to maximize nmats['geo']
@@ -125,16 +132,20 @@ def find_geodes(nmats, rates, t_remain, blueprint, skipped, ngeos):
     """
     logger.debug(f'======== minute {t_remain} ========\nmats: {nmats}\nrates: {rates}')
     if t_remain == 1:
+        # base case
         ngeo = nmats['geo'] + rates['geo']
         # lets python know this is the global scope var, before it looks
         # for a local `paths`
         global paths
+        global max_ngeo
         paths += 1
-        if ngeo > 0:
-            logger.debug(f"times up, collected {ngeo} geodes")
-            ngeos.append(ngeo)
+        if ngeo > max_ngeo:
+            max_ngeo = ngeo
+            logger.info(f'new max: {max_ngeo}')
+        #max_ngeo = max(ngeo, max_ngeo)
+        logger.debug(f"times up, collected {ngeo} geodes")
         return 
-    # check resources
+    # recursive case: check resources
     build = {}
     for robot in nmats:
         if isinf(nmats[robot]):
@@ -161,13 +172,20 @@ def find_geodes(nmats, rates, t_remain, blueprint, skipped, ngeos):
             new_rates = rates.copy()
             new_rates[robot] += 1
             logger.debug(f'after building {robot} robot:\nmats: {new_mats}\nrates: {new_rates}')
-            # next minute will not build all other robots
-            skipped = [b for b in build if b != robot]
-            find_geodes(new_mats, new_rates, t_remain, blueprint, skipped, ngeos)
+            if max_ngeo < ngeo_upperbound(t_remain, new_mats['geo'], rates['geo']):
+                logger.debug(f"current max: {max_ngeo}\ntheoretical: {ngeo_upperbound(t_remain-1, new_mats['geo'], rates['geo'])}")
+                # only recurse if this branch has potential
+                # next minute will not build all other robots
+                skipped = [b for b in build if b != robot]
+                find_geodes(new_mats, new_rates, t_remain, blueprint, skipped)
 
     # paths that do not build any
-    find_geodes(nmats, rates, t_remain, blueprint, [], ngeos)
+    find_geodes(nmats, rates, t_remain, blueprint, build.keys())
 
+def find_geodes(nmats, rates, t_remain, blueprint):
+    """
+    Chooses the target robot before proceeding
+    """
 
 def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     """ """
@@ -192,11 +210,12 @@ def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     nmats = dict(zip(mats, [0] * 4))
     rates = dict(zip(mats, [0,0,0,1]))
     # qlevels = [find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp) for bp in blueprints.values()]
+    global max_ngeo
     for bp in blueprints.values():
-        ngeos = []
-        find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp, skipped=[], ngeos=ngeos)
-        logger.info(f'most geodes: {max(ngeos)}')
+        find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp, skipped=[])
+        logger.info(f'most geodes: {max_ngeo}')
         logger.info(f'{paths} paths found')
+        max_ngeo = 0
         paths = 0
     # output
     tstop = time_ns()
