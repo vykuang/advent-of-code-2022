@@ -103,16 +103,17 @@ def not_find_geodes(bp: dict, timelim: int = 24) -> int:
     return nmats['geo']
 
 @cache
-def max_mat_req(t_remain: int, mat: str, blueprint: Hashabledict) -> int:
+def max_mat_req(mat: str, blueprint: Hashabledict) -> int:
     """
-    Given t_remain, material, and blueprint,
-    calculate the max number of mat needed if that robot
-    was built for all remaining minutes
+    Given material, and blueprint,
+    find the max number of mat needed 
     """
     # find highest req of this material
     reqs = [req for robot in blueprint.values() if (req := robot.get(mat))]
     if reqs:
-        return t_remain * max(reqs)
+        return max(reqs)
+    # for geo, since geo will not be in any requirements
+    return inf
 
 def ngeo_upperbound(t_remain, n_geo, r_geo) -> int:
     """
@@ -186,7 +187,7 @@ def find_geodes(nmats, rates, t_remain, blueprint):
     """
     Chooses the target robot before proceeding
     """
-    logger.debug(f'======== minute {t_remain} ========\nmats: {nmats}\nrates: {rates}')
+    # logger.debug(f'======== minute {t_remain} ========\nmats: {nmats}\nrates: {rates}')
     # base case
     if t_remain == 1:
         ngeo = nmats['geo'] + rates['geo']
@@ -195,11 +196,11 @@ def find_geodes(nmats, rates, t_remain, blueprint):
         global paths
         global max_ngeo
         paths += 1
-        if ngeo > max_ngeo:
-            max_ngeo = ngeo
-            logger.info(f'new max: {max_ngeo}')
-        #max_ngeo = max(ngeo, max_ngeo)
-        logger.debug(f"times up, collected {ngeo} geodes")
+        # if ngeo > max_ngeo:
+        #     max_ngeo = ngeo
+        #     logger.info(f'new max: {max_ngeo}')
+        max_ngeo = max(ngeo, max_ngeo)
+        # logger.debug(f"times up, collected {ngeo} geodes")
         return 
     # recursive case: building and collecting
     targets = ['ore', 'cla'] # always allowed to build ore or clay
@@ -207,29 +208,37 @@ def find_geodes(nmats, rates, t_remain, blueprint):
         targets.append('obs')
     if rates['obs'] > 0:
         targets.append('geo')
+        
+    # check if we have too many resources; remove from target if so
+    # checking rates is enough since we can only build once per minute
+    targets = [target for target in targets 
+               if rates[target] < max_mat_req(target, blueprint)]
+
     for target in targets:
-        logger.debug(f'target: {target}\trates: {rates}')
+        # logger.debug(f'target: {target}\trates: {rates}')
         newmats = nmats.copy()
+        newrates = rates.copy()
         pathtime = t_remain
         while not all(newmats[req] >= blueprint[target][req] for req in blueprint[target]) and pathtime >= 2:
             newmats.update({mat: newmats[mat] + rates[mat] for mat in rates})
             pathtime -= 1
-            logger.debug(f'time left: {pathtime}\tmats: {newmats}')
+            # logger.debug(f'time left: {pathtime}\tmats: {newmats}')
         if pathtime < 2:
             # not enough time to build target
-            logger.debug(f'not enough time to build {target}\nmats: {newmats}\nreqs: {blueprint[target]}')
+            # logger.debug(f'not enough time to build {target}\nmats: {newmats}\nreqs: {blueprint[target]}')
             continue
         # new minute, but force the build
         newmats.update({mat: newmats[mat] - blueprint[target][mat] for mat in blueprint[target]})
-        newrates = rates.copy()
+        newmats.update({mat: newmats[mat] + rates[mat] for mat in rates})
         newrates[target] += 1
         pathtime -= 1
-        logger.debug(f'built {target} at end of {pathtime}\nmats: {newmats}\nrate: {newrates}')
-        find_geodes(newmats, newrates, pathtime, blueprint)
+        # logger.debug(f'built {target} at end of {pathtime}\nmats: {newmats}\nrate: {newrates}')
+        if max_ngeo < ngeo_upperbound(t_remain, nmats['geo'], rates['geo']):
+            find_geodes(newmats, newrates, pathtime, blueprint)
 
 
 
-def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
+def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
     if not sample:
@@ -246,6 +255,7 @@ def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     # execute
     tstart = time_ns()
     mats = ['geo', 'obs', 'cla', 'ore']
+    t_limit = 32 if part_two else 24
     # for each blueprint:
     #   simulate minute by minute, starting with 1 ore collector
     #   initialize all other collector rates to 0
@@ -253,13 +263,22 @@ def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     rates = dict(zip(mats, [0,0,0,1]))
     # qlevels = [find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp) for bp in blueprints.values()]
     global max_ngeo
-    for bp in blueprints.values():
+
+    qualities = 0
+    mosts = 1
+    for idx, bp in blueprints.items():
         find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp)
         logger.info(f'most geodes: {max_ngeo}')
         logger.info(f'{paths} paths found')
+        qualities += (idx) * max_ngeo
+        mosts *= max_ngeo
+        if part_two and idx >= 3:
+            break
         max_ngeo = 0
         paths = 0
     # output
+    logger.info(f'quality level: {qualities}')
+    logger.info(f'product of 1st three max geodes: {mosts}')
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
@@ -270,6 +289,5 @@ if __name__ == "__main__":
     opt("--sample", "-s", action="store_true", default=False)
     opt("--part_two", "-t", action="store_true", default=False)
     opt("--loglevel", "-l", type=str.upper, default="info")
-    opt("--time", "-m", type=int)
     args = parser.parse_args()
-    main(args.sample, args.part_two, args.loglevel, args.time)
+    main(args.sample, args.part_two, args.loglevel)
