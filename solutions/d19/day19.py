@@ -121,7 +121,7 @@ def ngeo_upperbound(t_remain, n_geo, r_geo) -> int:
     """
     return n_geo + t_remain/2*(2*r_geo+t_remain-1)
 
-def find_geodes(nmats, rates, t_remain, blueprint, skipped):
+def not_find_geodes(nmats, rates, t_remain, blueprint, skipped):
     """
     Given nmat, rates, t_remain, use tree search
     to maximize nmats['geo']
@@ -186,6 +186,48 @@ def find_geodes(nmats, rates, t_remain, blueprint):
     """
     Chooses the target robot before proceeding
     """
+    logger.debug(f'======== minute {t_remain} ========\nmats: {nmats}\nrates: {rates}')
+    # base case
+    if t_remain == 1:
+        ngeo = nmats['geo'] + rates['geo']
+        # lets python know this is the global scope var, before it looks
+        # for a local `paths`
+        global paths
+        global max_ngeo
+        paths += 1
+        if ngeo > max_ngeo:
+            max_ngeo = ngeo
+            logger.info(f'new max: {max_ngeo}')
+        #max_ngeo = max(ngeo, max_ngeo)
+        logger.debug(f"times up, collected {ngeo} geodes")
+        return 
+    # recursive case: building and collecting
+    targets = ['ore', 'cla'] # always allowed to build ore or clay
+    if rates['cla'] > 0:
+        targets.append('obs')
+    if rates['obs'] > 0:
+        targets.append('geo')
+    for target in targets:
+        logger.debug(f'target: {target}\trates: {rates}')
+        newmats = nmats.copy()
+        pathtime = t_remain
+        while not all(newmats[req] >= blueprint[target][req] for req in blueprint[target]) and pathtime >= 2:
+            newmats.update({mat: newmats[mat] + rates[mat] for mat in rates})
+            pathtime -= 1
+            logger.debug(f'time left: {pathtime}\tmats: {newmats}')
+        if pathtime < 2:
+            # not enough time to build target
+            logger.debug(f'not enough time to build {target}\nmats: {newmats}\nreqs: {blueprint[target]}')
+            continue
+        # new minute, but force the build
+        newmats.update({mat: newmats[mat] - blueprint[target][mat] for mat in blueprint[target]})
+        newrates = rates.copy()
+        newrates[target] += 1
+        pathtime -= 1
+        logger.debug(f'built {target} at end of {pathtime}\nmats: {newmats}\nrate: {newrates}')
+        find_geodes(newmats, newrates, pathtime, blueprint)
+
+
 
 def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     """ """
@@ -212,7 +254,7 @@ def main(sample: bool, part_two: bool, loglevel: str, t_limit=24):
     # qlevels = [find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp) for bp in blueprints.values()]
     global max_ngeo
     for bp in blueprints.values():
-        find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp, skipped=[])
+        find_geodes(nmats=nmats,rates=rates,t_remain=t_limit,blueprint=bp)
         logger.info(f'most geodes: {max_ngeo}')
         logger.info(f'{paths} paths found')
         max_ngeo = 0
