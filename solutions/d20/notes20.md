@@ -13,7 +13,7 @@ Given a sequence of integers, each number is moved forward or backwards in a cyc
     - use `float` instead of `int` for `idx` to allow precise insertion without affecting other nodes
     - requires `sort` to retrieve `idx` for each move
 - normal list?
-    - 
+    - let's try to work with linked
 
 ## part 1 - grove coordinate
 

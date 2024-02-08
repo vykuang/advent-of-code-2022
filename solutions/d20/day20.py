@@ -4,6 +4,7 @@ import argparse
 import logging
 import sys
 from time import time_ns
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -15,6 +16,27 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
+# @dataclass
+class Cnode:
+    def __init__(self, val) -> None:
+        self.val = val
+        self.next = None
+    def __repr__(self) -> str:
+        return f'val: {self.val}; next: {self.next.val}'
+
+def create_circ_list(lines):
+    head = Cnode(int(next(lines)))
+    prev = head
+    leng = 1
+    for line in lines:
+        curr = Cnode(int(line))
+        prev.next = curr
+        prev = curr
+        leng += 1
+
+    # full circle
+    curr.next = head
+    return head, leng
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -27,9 +49,16 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
-    order = [int(line) for line in read_line(fp) if line.strip()]
-    logger.debug(f'initial: {order}')
-    leng = len(order)
+    # order = [int(line) for line in read_line(fp) if line.strip()]
+    # order = [Cnode(int(line)) for line in read_line(fp) if line.strip()]
+    head, leng = create_circ_list(read_line(fp))
+
+    idx = 0
+    curr = head
+    while idx < leng:
+        logger.debug(f'node: {curr}')
+        curr = curr.next
+        idx += 1
     logger.info(f'len: {leng}')
     
     # execute
@@ -60,7 +89,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
         # if idx < chk_idx:
         # else:
         #     circular = circular[:chk_idx] + circular[chk_idx + 1: idx] + [num] + circular[idx+1:]
-        logger.debug(f'moved {num} from {idx} to {chk_idx}\nseq: {circular}')
+        logger.debug(f'moved {num} to between {circular[chk_idx-1]} and {circular[chk_idx+1]}\nseq: {circular}')
 
     z_idx = circular.index(0)
     groves = [(coord_idx % leng + z_idx) % leng for coord_idx in [1000, 2000, 3000]]
