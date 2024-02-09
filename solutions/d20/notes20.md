@@ -31,3 +31,28 @@ Algorithm
 ### trips
 
 - movements wrapping the list multiple times
+
+### linked lists
+
+Moving nodes:
+
+1. take the value
+1. for the node whose `next` pointed to current, set to current's `next`, to remove current from original position
+    - search through entire list?
+    - use `dict` for faster lookup
+    - values are not unique, but can be combined with `before` and `next` for a suitable hashkey
+    - how would I integrate `dict`?
+        - `d[node]` returns the node?
+        - `d[node].next/before/val` for attr?
+        - hashkeys are the val and original order?
+        - for a given node, how would I find the `before` node that points to the given as `next`?
+            - add `before` for each node while building linked list
+    - if I have `before`, I don't need a `dict`?
+        `curr.prev.next = new_next`?
+    - reverse if val < 0
+
+1. traverse number of nodes equal to value
+    - more traversal
+1. set current's `next` as the arrived node's `next
+1. set current node as the `next` of the arrived node
+
