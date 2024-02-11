@@ -56,3 +56,21 @@ Moving nodes:
 1. set current's `next` as the arrived node's `next
 1. set current node as the `next` of the arrived node
 
+### modulo in python
+
+If today is Tuesday (2), what day of the week is `N` days before?
+
+```py
+(2 - N) % 7
+```
+
+If `N > 2`, python still returns a positive integer, e.g. -1 % 7 = 6; this is opposed to other languages which simply return -1. Idea is that positive integers are generally more useful, and in those cases we would manually add 7 anyway. In the case of the weekdays, returning 6 means that we can use that number to *move forward* 6 days to arrive at our answer, Monday.
+
+Returning to context of this puzzle, whenever we have negative, we can use `% (len - 1)` to unify all our movements to *forward* and still arrive at the correct position
+
+## part 2 - decryption key
+
+- mult 811589153 to all numbers in input
+- mix the list 10 times, instead of 1
+
+So obviously that makes original implementation untenable; each movement op cannot have its steps multiplied by 800 million. What does it mean in practice, having a larger movement value? Not much, since we're using modulo, anyway? and we need to multiply our answer by the decryption value as well. Just multiply while reading in the `.val` attributes in the beginning

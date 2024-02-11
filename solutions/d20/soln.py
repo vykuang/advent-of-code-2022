@@ -18,7 +18,7 @@ def read_line(fpath: str):
 
 # @dataclass
 class Cnode:
-    """Nodes in a circular linked list"""
+    """Nodes in a circular doubly linked list"""
     def __init__(self, val) -> None:
         self.val = val
         self.prev = None
@@ -26,23 +26,20 @@ class Cnode:
     def __repr__(self) -> str:
         return f'val: {self.val}'
     
-    # def __hash__(self) -> int:
-    #     return hash((self.order, self.val))
 
-
-def create_circ_list(lines):
+def create_circ_list(lines, decrypt=1):
     # index = {}
-    head = Cnode(int(next(lines)))
+    head = Cnode(decrypt*int(next(lines)))
     # index[head] = head
     prev = head
-    curr = Cnode(int(next(lines)))
+    curr = Cnode(decrypt*int(next(lines)))
     # index[curr] = curr
     prev.next = curr
     curr.prev = prev
     leng = 2
     for line in lines:
         # assign new nodes
-        new_node = Cnode(int(line))
+        new_node = Cnode(decrypt*int(line))
         curr.next = new_node
         new_node.prev = curr
         # update
@@ -79,10 +76,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
     # read input
     # order = [int(line) for line in read_line(fp) if line.strip()]
     # order = [Cnode(int(line)) for line in read_line(fp) if line.strip()]
-    head, leng = create_circ_list(read_line(fp))
-
-    vals = [int(line) for line in read_line(fp)]
-    logger.debug(f'list: {len(vals)}\tset: {len(set(vals))}')
+    decrypt = 811589153 if part_two else 1
+    loops = 10 if part_two else 1
+    head, leng = create_circ_list(read_line(fp), decrypt=decrypt)
     idx = 0
     curr = head
     order = []
@@ -92,78 +88,48 @@ def main(sample: bool, part_two: bool, loglevel: str):
         curr = curr.next
         idx += 1
     logger.info(f'len: {leng}')
-    
     # execute
     tstart = time_ns()
-    # milestone = leng // 100
-    # circular = order.copy()
-    # for i, num in enumerate(order):
-    #     if i > milestone:
-    #         # logger.info(f'processing {i+1} / {leng}')
-    #         milestone += milestone
-    #     if num == 0:
-    #         continue
-    #     idx = circular.index(num)
-    #     chk_idx = idx + num
-    #     if chk_idx > leng:
-    #         # how to handle multiple wrappings???
-    #         chk_idx = chk_idx % leng + 1
-    #         circular = circular[:chk_idx]  + [num] + circular[chk_idx: idx] + circular[idx+1:]
-    #     else:
-    #         if chk_idx < 0:
-    #             chk_idx -= 1
-    #         elif chk_idx == 0:
-    #             chk_idx = leng - 1
-    #         elif chk_idx == leng - 1:
-    #             chk_idx = 0
-    #         circular = circular[:idx] + circular[idx + 1: chk_idx+1] + [num] + circular[chk_idx+1:]
-        
-    #     # if idx < chk_idx:
-    #     # else:
-    #     #     circular = circular[:chk_idx] + circular[chk_idx + 1: idx] + [num] + circular[idx+1:]
-    #     logger.debug(f'moved {num} to between {circular[chk_idx-1]} and {circular[chk_idx+1]}\nseq: {circular}')
-
-    # z_idx = circular.index(0)
-    # groves = [(coord_idx % leng + z_idx) % leng for coord_idx in [1000, 2000, 3000]]
+    
     logger.debug(f'initial: {print_circ(head, leng)}')
-    # locate the node in question
-    for node in order:
-        logger.debug(f'moving {node.val}')
-        traversed = 0
-        curr = node
-        if node.val > 0:
-            while traversed < node.val:
-                curr = curr.next
-                traversed += 1
-                logger.debug(f'{traversed}th step through {curr.val}')
+    for _ in range(loops):
+        for node in order:
+            logger.debug(f'moving {node.val}')
             # bridging the gap
             node.prev.next = node.next
             node.next.prev = node.prev
+            # prepping the move
+            prv = node.prev
+            nxt = node.next
+            # movement
+            for _ in range(node.val % (leng - 1)):
+                prv = prv.next
+                nxt = nxt.next
             # insertion
-            node.next = curr.next
-            node.prev = curr
+            node.prev = prv
+            node.next = nxt
             # amend the insertion
-            curr.next = node
-            curr.next.prev = node
-        elif node.val < 0:
-            while traversed > node.val:
-                curr = curr.prev
-                traversed -= 1
-                logger.debug(f'{traversed}th step through {curr.val}')
-            # bridging the gap
-            node.prev.next = node.next
-            node.next.prev = node.prev
-            # insertion
-            node.prev = curr.prev
-            node.next = curr
-            # amend the insertion
-            curr.prev.next = node
-            curr.prev = node
-        else:
-            continue
-        
-        print(print_circ(head, leng))
+            prv.next = node
+            nxt.prev = node
 
+        # idx = 0
+        # curr = head
+        # while idx < leng:
+        #     logger.debug(f'node {curr}\tprev {curr.prev}\tnext {curr.next}')
+        #     curr = curr.next
+        #     idx += 1
+        # print(print_circ(head, leng))
+
+    # starting from node.val = 0
+    groves = []
+    curr = head
+    while curr.val != 0:
+        curr = curr.next
+    for _ in range(3):
+        for _ in range(1000):
+            curr = curr.next
+
+        groves.append(curr.val)
     # output
     logger.info(f'sum: {sum(groves)}')
     tstop = time_ns()
