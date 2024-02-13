@@ -25,6 +25,12 @@ def parse_monkey(line: str):
     """
     return line.strip().split(':')
 
+def find_monkey(name):
+    """
+    Given the name of monkey, find their value,
+    whether it is a int or result of operation
+    """
+
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)

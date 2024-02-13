@@ -4,7 +4,6 @@ import argparse
 import logging
 import sys
 from time import time_ns
-from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -16,7 +15,6 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
-# @dataclass
 class Cnode:
     """Nodes in a circular doubly linked list"""
     def __init__(self, val) -> None:
@@ -28,12 +26,9 @@ class Cnode:
     
 
 def create_circ_list(lines, decrypt=1):
-    # index = {}
     head = Cnode(decrypt*int(next(lines)))
-    # index[head] = head
     prev = head
     curr = Cnode(decrypt*int(next(lines)))
-    # index[curr] = curr
     prev.next = curr
     curr.prev = prev
     leng = 2
@@ -74,8 +69,6 @@ def main(sample: bool, part_two: bool, loglevel: str):
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
 
     # read input
-    # order = [int(line) for line in read_line(fp) if line.strip()]
-    # order = [Cnode(int(line)) for line in read_line(fp) if line.strip()]
     decrypt = 811589153 if part_two else 1
     loops = 10 if part_two else 1
     head, leng = create_circ_list(read_line(fp), decrypt=decrypt)
@@ -83,7 +76,7 @@ def main(sample: bool, part_two: bool, loglevel: str):
     curr = head
     order = []
     while idx < leng:
-        logger.debug(f'node {curr}\tprev {curr.prev}\tnext {curr.next}')
+        # logger.debug(f'node {curr}\tprev {curr.prev}\tnext {curr.next}')
         order.append(curr)
         curr = curr.next
         idx += 1
@@ -112,16 +105,8 @@ def main(sample: bool, part_two: bool, loglevel: str):
             prv.next = node
             nxt.prev = node
 
-        # idx = 0
-        # curr = head
-        # while idx < leng:
-        #     logger.debug(f'node {curr}\tprev {curr.prev}\tnext {curr.next}')
-        #     curr = curr.next
-        #     idx += 1
-        # print(print_circ(head, leng))
-
     # starting from node.val = 0
-    groves = []
+    groves = 0
     curr = head
     while curr.val != 0:
         curr = curr.next
@@ -129,9 +114,9 @@ def main(sample: bool, part_two: bool, loglevel: str):
         for _ in range(1000):
             curr = curr.next
 
-        groves.append(curr.val)
+        groves += curr.val
     # output
-    logger.info(f'sum: {sum(groves)}')
+    logger.info(f'sum: {groves}')
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
