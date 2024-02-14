@@ -129,7 +129,7 @@ def calc_pressure(tunnel: list[tuple], valves: dict) -> int:
     logger.debug(f'tunnel: {tunnel}')
     return sum([valves[v[0]].rate * v[1] for v in tunnel])
 
-def main(sample: bool, part_two: bool, loglevel: str, root=root):
+def main(sample: bool, part_two: bool, loglevel: str):
     """ """
     logger.setLevel(loglevel)
     if sample:
@@ -139,6 +139,7 @@ def main(sample: bool, part_two: bool, loglevel: str, root=root):
     logger.debug(f"loglevel: {loglevel}")
     logger.info(f'Using {fp} for {"part 2" if part_two else "part 1"}')
     
+    root = 'AA'
     if part_two:
         time_lim = 26
     else:

@@ -6,7 +6,6 @@ import sys
 from time import time_ns
 import re
 # from dataclasses import dataclass
-from collections import defaultdict
 from math import inf, isinf
 from functools import cache
 
@@ -65,42 +64,6 @@ def parse_blueprint(line: str):
     blueprint = {p[0]: p[1] for req in reqs.split('.') if (p := parse_req(req.strip()))}
     return bid, Hashabledict(blueprint)
 
-def not_find_geodes(bp: dict, timelim: int = 24) -> int:
-    """
-    Find geodes given blueprint
-    Rules are hardcoded, and will not find max n_geo
-    """
-    mats = ['geo', 'obs', 'cla', 'ore']
-    rates = defaultdict(lambda: 0)
-    rates['ore'] = 1
-    nmats = defaultdict(lambda: 0)
-    build = defaultdict(lambda: False)
-    for t in range(timelim):
-        logger.debug(f'== minute {t} ==')
-        # spend mats to build; check reqs
-        # naive method will always build only clay robots
-        # need pathfinding; at each point we have enough,
-        # one path builds it, and the other saves it for next round
-        for robot in mats:
-            logger.debug(f'checking reqs for {robot} robot')
-            if all(nmats[mat] >= bp[robot][mat] for mat in bp[robot]):
-                build[robot] = True
-                logger.debug(f'building {robot} robot')
-                for mat in bp[robot]:
-                    nmats[mat] -= bp[robot][mat]
-                logger.debug(f'mats after consumption:\n{nmats}')
-
-        # collect ores
-        for mat in mats:
-            nmats[mat] += rates[mat]
-            if build[mat]:
-                logger.debug(f'rate inc for {mat}')
-                rates[mat] += 1
-                build[mat] = False
-        logger.debug(f'nmats: {nmats}')
-
-        f = input()
-    return nmats['geo']
 
 @cache
 def max_mat_req(t_remain: int, mat: str, blueprint: Hashabledict) -> int:

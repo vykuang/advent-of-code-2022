@@ -25,11 +25,25 @@ def parse_monkey(line: str):
     """
     return line.strip().split(':')
 
-def find_monkey(name):
+def find_monkey(monkeys: dict, name: str):
     """
     Given the name of monkey, find their value,
     whether it is a int or result of operation
+    Assumes the initial 
     """
+    # base case - int literal
+    # logger.debug(f'monkey: {name}\tjob: {monkeys[name]}')
+    if monkeys[name].isnumeric() or monkeys[name][0] == '-':
+        logger.debug('int; returning')
+        return int(monkeys[name])
+    # recursive case - search name until int, and return op
+    else:
+        logger.debug('job; recursing')
+        mka, op, mkb = monkeys[name].split()
+        va = find_monkey(monkeys, mka)
+        vb = find_monkey(monkeys, mkb)
+        return eval(f'va {op} vb')
+
 
 def main(sample: bool, part_two: bool, loglevel: str):
     """ """
@@ -43,17 +57,25 @@ def main(sample: bool, part_two: bool, loglevel: str):
 
     # read input
     monkeys = {l[0].strip(): l[1].strip() for line in read_line(fp) if (l := parse_monkey(line))}
+    if part_two:
+        # modify to equality check
+        a, _, b = monkeys['root'].split()
+        monkeys['root'] = ' '.join([a, '==', b])
     logger.debug(f'monkeys: {monkeys}')
     # execute
     tstart = time_ns()
-    for monkey, job in monkeys.items():
-        if job.isnumeric():
-            seen[monkey] = int(job)
-        else:
-            op1, op, op2 = job.split()
+    if part_two:
+        humn = 9998
+        while not find_monkey(monkeys, 'root'):
+            humn += 1
+            monkeys['humn'] = str(humn)
+        logger.info(f'humn yells {humn}')
+    else:
+        root = find_monkey(monkeys, 'root')
+        logger.info(f'root yells {root}')
 
     # output
-
+        
     tstop = time_ns()
     logger.info(f"runtime: {(tstop-tstart)/1e6} ms")
 
