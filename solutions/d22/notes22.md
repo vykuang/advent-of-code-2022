@@ -30,3 +30,14 @@
 - board has few edges;
     - if row in this range, min = a, max = b
 
+### traversal logic
+
+- chk = pos + face
+- if wrap, chk = wrap
+- check if wall or path
+- if wall, break
+- if path, inc mov, update pos, next
+
+## part 2 - cubed
+
+the map is actually a 2D rep of an unfolded cube; there are 6 equally sized squares that make the unfolded cube. not sure how to even start

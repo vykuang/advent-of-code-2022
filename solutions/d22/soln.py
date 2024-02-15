@@ -17,21 +17,43 @@ def read_line(fpath: str):
     with open(fpath) as f:
         yield from f
 
-def traverse(board, pos, face, nmov, wall='#', tile='.') -> complex:
+def traverse(board, pos, face, nmov, wall='#', path='.') -> complex:
     """
     Traverses the board using the puzzle's wrap-around logic
     and returns the arrival pos
     """
+    logger.debug(f'from {pos}, {nmov} towards {face}')
     moved = 0
-    while board[pos] == tile:
-        pos += face
+    while moved < nmov:
+        chk = pos + face
         # check for wall or wraparound
-        if (chk := board.get(pos)) == wall:
-            break
-        if not chk:
-            # wraparound
-
-
+        if not (tile := board.get(chk)):
+            # wrap
+            logger.debug(f'wrap from {pos}')
+            match face:
+                case -1:
+                    chk = max([tile for tile in board.keys()
+                        if tile.imag == pos.imag],
+                        key=attrgetter('real'))
+                case -1j:
+                    chk = max([tile for tile in board.keys()
+                        if tile.real == pos.real],
+                        key=attrgetter('imag'))
+                case 1:
+                    chk = min([tile for tile in board.keys()
+                        if tile.imag == pos.imag],
+                        key=attrgetter('real'))
+                case 1j:
+                    chk = min([tile for tile in board.keys()
+                        if tile.real == pos.real],
+                        key=attrgetter('imag'))
+        if (tile := board.get(chk)) == wall:
+            logger.debug('wall; break')
+            break 
+        if tile == path:
+            moved += 1
+            pos = chk
+            continue
     return pos
 
 
@@ -52,14 +74,15 @@ def main(sample: bool, part_two: bool, loglevel: str):
     row = 1
     board = {}
     while line.strip():
-        logger.debug(f'line: {line}')
+        logger.debug(f'row {row}: {line}')
         new_pos = {col + 1 + row * 1j: ch
                 for col, ch in enumerate(line)
                 if ch in ['.', '#']}
         board.update(new_pos)
         row += 1
         line = next(lines)
-    path = next(lines) # num - RL - num - ... - RL - num
+    path = next(lines).strip() # num - RL - num - ... - RL - num
+    logger.debug(f'{path}')
     # execute
     start = min([pos for pos, tile in board.items() if tile == '.'],
             key=attrgetter('imag', 'real'))
@@ -72,12 +95,13 @@ def main(sample: bool, part_two: bool, loglevel: str):
     nmov = int(hit.group(0))
     pos_curr = traverse(board, start, pos_face, nmov)
     path = path[hit.end():]
-    while path:
+    while path.strip():
         # consume while we traverse
+        logger.debug(f'path remaining: {path}')
         turn = path[0]
         if turn == 'R':
             pos_face *= 1j
-        elif:
+        else:
             pos_face *= -1j
         path = path[1:]
         hit = re.match(r'\d+', path)
