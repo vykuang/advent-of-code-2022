@@ -6,3 +6,4 @@
 *.json
 .ruff_cache/
 .*.swp
+rename.sh
